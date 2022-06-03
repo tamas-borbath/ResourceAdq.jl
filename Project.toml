@@ -1,0 +1,7 @@
+name = "ResourceAdq"
+uuid = "c94ec09b-1913-49f2-b3a0-ce23208a88b1"
+authors = ["Tamás Borbáth <borbathtamas@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.7"
