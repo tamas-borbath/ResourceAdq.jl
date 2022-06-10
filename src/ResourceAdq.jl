@@ -1,5 +1,8 @@
 module ResourceAdq
 
+using ParameterJuMP,JuMP, Gurobi
+const SOLVER = Gurobi
+
 
 #using PRAS
 import PRAS: SystemModel, SequentialMonteCarlo, Shortfall, GeneratorAvailability, assess
@@ -8,9 +11,11 @@ import PRAS: SystemModel, SequentialMonteCarlo, Shortfall, GeneratorAvailability
 greet() = print("HelloWorld2")
 
 #Excel interface for models
-#include("xlsx_io.jl")
-#export read_XLSX
-#export write_XLSX
+include("xlsx_io.jl")
+export read_XLSX
+export write_XLSX
+
+
 import Base: -, broadcastable, getindex, merge!
 import Base.Threads: nthreads, @spawn
 #import Dates: DateTime, Period
@@ -35,7 +40,9 @@ using PRAS.ResourceAdequacy
 
 
 
-include("./montecarloAPI/MonteCarloAPI.jl")
+#include("./montecarloAPI/MonteCarloAPI.jl")
+
+include("./AbstractMC/AbstractMC.jl")
 
 function resultchannel(
     method::SimulationSpec, results::T, threads::Int
@@ -71,7 +78,7 @@ end
 
 #Imported directly from PRAS
 #SystemModel = _P.SystemModel
-export SystemModel, SequentialMonteCarlo, assess, MonteCarloAPI
+export SystemModel, SequentialMonteCarlo, assess, MonteCarloAPI, AbstractMC
 export Shortfall, Surplus, Flow, Utilization, ShortfallSamples, SurplusSamples, FlowSamples, UtilizationSamples, GeneratorAvailability
 import PRAS.ResourceAdequacy: ShortfallResult, SurplusResult, FlowResult, UtilizationResult, ShortfallSamplesResult, SurplusSamplesResult, FlowSamplesResult, UtilizationSamplesResult, GeneratorAvailabilityResult
 export LOLE, EUE

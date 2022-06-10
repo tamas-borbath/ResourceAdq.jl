@@ -1,4 +1,4 @@
-using XLSX, DataFrames, Dates, TimeZones
+using XLSX, DataFrames, Dates, TimeZones, PRAS
 function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_input, p_Length)
    @info "Loading data for: "*p_name
    global  gens_df = DataFrame(XLSX.gettable(p_input[p_name])...)
@@ -88,9 +88,9 @@ function read_XLSX(p_path)
     end
     @show settings
     #These are not safe for code injection
-    EnergyUnit = eval(Meta.parse("_P."*settings["EnergyUnit"]))
+    EnergyUnit = eval(Meta.parse("PRAS."*settings["EnergyUnit"]))
     TimeUnit = eval(Meta.parse(settings["TimeUnit"]))
-    PowerUnit = eval(Meta.parse("_P."*settings["PowerUnit"]))
+    PowerUnit = eval(Meta.parse("PRAS."*settings["PowerUnit"]))
     Length = parse(Int64, settings["Length"])
  #    Lines = parse(Int64, settings["TS_Length"])
     TimeStamp_start = ZonedDateTime(settings["TimeStamp_start"], dateformat"yyyy-mm-dd HH:MM ZZZ")
@@ -106,12 +106,12 @@ function read_XLSX(p_path)
     
     vars = read_data("Generators",:Region, [:capacity],[:λ, :μ] ,input_xlsx, Length)
      
-    generators = _P.Generators{Length,TS_length,TimeUnit,PowerUnit}(
+    generators = PRAS.Generators{Length,TS_length,TimeUnit,PowerUnit}(
         vars[:names], vars[:categories], vars[:capacity], vars[:λ], vars[:μ])
     gen_regions = vars[:index]
 
     vars = read_data("Storage", :Region, [:charge_capacity, :discharge_capacity, :energy_capacity],[:charge_efficiency,:discharge_efficiency,:carryover_efficiency,:λ, :μ] ,input_xlsx, Length)
-    storages = _P.Storages{Length,TS_length,TimeUnit,PowerUnit,EnergyUnit}(
+    storages = PRAS.Storages{Length,TS_length,TimeUnit,PowerUnit,EnergyUnit}(
         vars[:names], vars[:categories],
         vars[:charge_capacity], vars[:discharge_capacity],
         vars[:energy_capacity], vars[:charge_efficiency],
@@ -121,7 +121,7 @@ function read_XLSX(p_path)
 
     vars = read_data("GenStor",:Region, [:charge_capacity, :discharge_capacity, :energy_capacity, :inflow, :gridwithdrawal_capacity, :gridinjection_capacity],[:charge_efficiency,:discharge_efficiency,:carryover_efficiency,:λ, :μ] ,input_xlsx, Length)
   
-    generatorstorages = _P.GeneratorStorages{Length,TS_length,TimeUnit,PowerUnit,EnergyUnit}(
+    generatorstorages = PRAS.GeneratorStorages{Length,TS_length,TimeUnit,PowerUnit,EnergyUnit}(
         vars[:names], vars[:categories],
         vars[:charge_capacity], vars[:discharge_capacity],
         vars[:energy_capacity], vars[:charge_efficiency],
@@ -133,7 +133,7 @@ function read_XLSX(p_path)
 
     vars = read_data("Lines", :Interface, [:forward_capacity, :backward_capacity],[:λ, :μ] ,input_xlsx, Length)
 
-    lines = _P.Lines{Length,TS_length,TimeUnit,PowerUnit}(
+    lines = PRAS.Lines{Length,TS_length,TimeUnit,PowerUnit}(
         vars[:names], vars[:categories],
         vars[:forward_capacity], vars[:backward_capacity],
         vars[:λ], vars[:μ])
@@ -141,16 +141,16 @@ function read_XLSX(p_path)
     @show line_interfaces
     
     regions_df = DataFrame(XLSX.gettable(input_xlsx["Regions"])...)
-    regions = _P.Regions{Length,PowerUnit}(
+    regions = PRAS.Regions{Length,PowerUnit}(
         names(regions_df), Matrix{Int64}(transpose(Matrix{Int64}(regions_df))))
 
     vars = read_data("Interface",:Names, [:Region_from, :Region_to, :limit_forward, :limit_backward],[] ,input_xlsx, Length)
-    interfaces = _P.Interfaces{Length,PowerUnit}(
+    interfaces = PRAS.Interfaces{Length,PowerUnit}(
         vars[:Region_from],vars[:Region_to] ,
         vars[:limit_forward], vars[:limit_backward])
     timestamps = TimeStamp_start:TimeStamp_step:TimeStamp_stop
-    @show step(timestamps)
-    return _P.SystemModel(
+    @show length(timestamps)
+    return PRAS.SystemModel(
         regions, interfaces,
         generators, gen_regions, storages, stor_regions,
         generatorstorages, genstor_regions,
