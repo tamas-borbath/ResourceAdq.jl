@@ -42,7 +42,7 @@ using PRAS.ResourceAdequacy
 
 #include("./montecarloAPI/MonteCarloAPI.jl")
 
-include("./AbstractMC/AbstractMC.jl")
+include("./NetworkMC/AbstractMC.jl")
 
 function resultchannel(
     method::SimulationSpec, results::T, threads::Int
