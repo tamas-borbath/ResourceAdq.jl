@@ -1,4 +1,4 @@
-function OptProblem(sys::SystemModel)
+function PowerModelOptProblem(sys::SystemModel)
     m = Model(SOLVER.Optimizer)
     set_optimizer_attribute(m, "OutputFlag", 0)
     region_name_to_index = Dict([sys.regions.names[i] => i for i in 1:length(sys.regions.names)])

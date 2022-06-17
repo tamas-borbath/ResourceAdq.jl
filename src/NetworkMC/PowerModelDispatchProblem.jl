@@ -1,22 +1,22 @@
 """
 
-    AbstractDispatchProblem(sys::SystemModel)
+    PowerModelDispatchProblem(sys::SystemModel)
 
 Create a mathematical optimization aiming to compute the ENS amount.
 
 """
-struct AbstractDispatchProblem
+struct PowerModelDispatchProblem
 
     mdl::JuMP.Model
     region_nodes::UnitRange{Int}
     
-    function AbstractDispatchProblem(
+    function PowerModelDispatchProblem(
         sys::SystemModel; unlimited::Int=999_999_999)
         nregions = length(sys.regions)
         region_nodes = 1:nregions
         return new(
 
-            OptProblem(sys),
+            PowerModelOptProblem(sys),
             region_nodes
         )
 
@@ -28,7 +28,7 @@ indices_after(lastset::UnitRange{Int}, setsize::Int) =
     last(lastset) .+ (1:setsize)
 
 function update_problem!(
-    problem::AbstractDispatchProblem, state::SystemState,
+    problem::PowerModelDispatchProblem, state::SystemState,
     system::SystemModel{N,L,T,P,E}, t::Int
 ) where {N,L,T,P,E}
 
@@ -62,7 +62,7 @@ function update_problem!(
 end
 
 function update_state!(
-    state::SystemState, problem::AbstractDispatchProblem,
+    state::SystemState, problem::PowerModelDispatchProblem,
     system::SystemModel{N,L,T,P,E}, t::Int
 ) where {N,L,T,P,E}
 

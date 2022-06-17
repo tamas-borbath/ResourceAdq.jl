@@ -16,6 +16,7 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
     interface_line_idxs::Vector{UnitRange{Int}}
 
     timestamps::StepRange{ZonedDateTime,T}
+    grid::Dict{String, Any}
 
     function SystemModel{}(
         regions::Regions{N,P}, interfaces::Interfaces{N,P},
@@ -51,7 +52,7 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
             regions, interfaces,
             generators, region_gen_idxs, storages, region_stor_idxs,
             generatorstorages, region_genstor_idxs, lines, interface_line_idxs,
-            timestamps)
+            timestamps, Dict{String, Any}())
 
     end
 

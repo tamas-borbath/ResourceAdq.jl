@@ -44,11 +44,12 @@ using PRAS.ResourceAdequacy
 include("./PRASBase/PRASBase.jl")
 include("./ResourceAdequacy/metrics.jl")
 include("./ResourceAdequacy/results/results.jl")
-include("AbstractMC/AbstractMC.jl")
+include("./AbstractMC/AbstractMC.jl")
+include("./NetworkMC/PowerModelMC.jl")
 
 #Imported directly from PRAS
 #SystemModel = _P.SystemModel
-export SystemModel, SequentialMonteCarlo, assess, MonteCarloAPI, AbstractMC
+export SystemModel, SequentialMonteCarlo, assess, MonteCarloAPI, AbstractMC, PowerModelMC
 export Shortfall, Surplus, Flow, Utilization, ShortfallSamples, SurplusSamples, FlowSamples, UtilizationSamples, GeneratorAvailability
 export LOLE, EUE
 #Shortfall(), GeneratorAvailability()

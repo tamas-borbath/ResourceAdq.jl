@@ -1,16 +1,16 @@
-include("OptProblem.jl")
+include("PowerModelOptProblem.jl")
 include("SystemState.jl")
-include("AbstractDispatchProblem.jl")
+include("PowerModelDispatchProblem.jl")
 include("utils.jl")
 
-struct AbstractMC <: SimulationSpec
+struct PowerModelMC <: SimulationSpec
 
     nsamples::Int
     seed::UInt64
     verbose::Bool
     threaded::Bool
 
-    function AbstractMC(;
+    function PowerModelMC(;
         samples::Int=10_000, seed::Integer=rand(UInt64),
         verbose::Bool=false, threaded::Bool=true
     )
@@ -23,7 +23,7 @@ end
 
 function assess(
     system::SystemModel,
-    method::AbstractMC,
+    method::PowerModelMC,
     resultspecs::ResultSpec...
 )
 
@@ -55,12 +55,12 @@ function makeseeds(sampleseeds::Channel{Int}, nsamples::Int)
 end
 
 function assess(
-    system::SystemModel{N}, method::AbstractMC,
+    system::SystemModel{N}, method::PowerModelMC,
     sampleseeds::Channel{Int},
-    results::Channel{<:Tuple{Vararg{ResultAccumulator{AbstractMC}}}},
+    results::Channel{<:Tuple{Vararg{ResultAccumulator{PowerModelMC}}}},
     resultspecs::ResultSpec...
 ) where {R<:ResultSpec, N}
-    dispatchproblem = AbstractDispatchProblem(system)
+    dispatchproblem = PowerModelDispatchProblem(system)
     systemstate = SystemState(system)
     recorders = accumulator.(system, method, resultspecs)
 
@@ -121,7 +121,7 @@ end
 function advance!(
     rng::AbstractRNG,
     state::SystemState,
-    dispatchproblem::AbstractDispatchProblem,
+    dispatchproblem::PowerModelDispatchProblem,
     system::SystemModel{N}, t::Int) where N
 
     update_availability!(
@@ -148,7 +148,7 @@ function advance!(
 end
 
 function solve!(
-    dispatchproblem::AbstractDispatchProblem, state::SystemState,
+    dispatchproblem::PowerModelDispatchProblem, state::SystemState,
     system::SystemModel, t::Int
 )
     optimize!(dispatchproblem.mdl)

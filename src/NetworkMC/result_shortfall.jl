@@ -1,6 +1,6 @@
 # Shortfall
 
-mutable struct AMCShortfallAccumulator <: ResultAccumulator{AbstractMC,Shortfall}
+mutable struct PMCShortfallAccumulator <: ResultAccumulator{PowerModelMC,Shortfall}
 
     # Cross-simulation LOL period count mean/variances
     periodsdropped_total::MeanVariance
@@ -25,7 +25,7 @@ mutable struct AMCShortfallAccumulator <: ResultAccumulator{AbstractMC,Shortfall
 end
 
 function merge!(
-    x::AMCShortfallAccumulator, y::AMCShortfallAccumulator
+    x::PMCShortfallAccumulator, y::PMCShortfallAccumulator
 )
 
     merge!(x.periodsdropped_total, y.periodsdropped_total)
@@ -42,10 +42,10 @@ function merge!(
 
 end
 
-accumulatortype(::AbstractMC, ::Shortfall) = AMCShortfallAccumulator
+accumulatortype(::PowerModelMC, ::Shortfall) = PMCShortfallAccumulator
 
 function accumulator(
-    sys::SystemModel{N}, ::AbstractMC, ::Shortfall
+    sys::SystemModel{N}, ::PowerModelMC, ::Shortfall
 ) where {N}
 
     nregions = length(sys.regions)
@@ -66,7 +66,7 @@ function accumulator(
     unservedload_total_currentsim = 0.0
     unservedload_region_currentsim = zeros(Float64, nregions)
 
-    return AMCShortfallAccumulator(
+    return PMCShortfallAccumulator(
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_regionperiod,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
@@ -77,9 +77,9 @@ function accumulator(
 end
 
 function record!(
-    acc::AMCShortfallAccumulator,
+    acc::PMCShortfallAccumulator,
     system::SystemModel{N,L,T,P,E},
-    state::SystemState, problem::AbstractDispatchProblem,
+    state::SystemState, problem::PowerModelDispatchProblem,
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
@@ -121,7 +121,7 @@ function record!(
 
 end
 
-function reset!(acc::AMCShortfallAccumulator, sampleid::Int)
+function reset!(acc::PMCShortfallAccumulator, sampleid::Int)
 
     # Store regional / total sums for current simulation
     fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
@@ -143,7 +143,7 @@ function reset!(acc::AMCShortfallAccumulator, sampleid::Int)
 end
 
 function finalize(
-    acc::AMCShortfallAccumulator,
+    acc::PMCShortfallAccumulator,
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E}
 
@@ -174,15 +174,15 @@ end
 
 # ShortfallSamples
 
-struct AMCShortfallSamplesAccumulator <:
-    ResultAccumulator{AbstractMC,ShortfallSamples}
+struct PMCShortfallSamplesAccumulator <:
+    ResultAccumulator{PowerModelMC,ShortfallSamples}
 
     shortfall::Array{Int,3}
 
 end
 
 function merge!(
-    x::AMCShortfallSamplesAccumulator, y::AMCShortfallSamplesAccumulator
+    x::PMCShortfallSamplesAccumulator, y::PMCShortfallSamplesAccumulator
 )
 
     x.shortfall .+= y.shortfall
@@ -190,23 +190,23 @@ function merge!(
 
 end
 
-accumulatortype(::AbstractMC, ::ShortfallSamples) = AMCShortfallSamplesAccumulator
+accumulatortype(::PowerModelMC, ::ShortfallSamples) = PMCShortfallSamplesAccumulator
 
 function accumulator(
-    sys::SystemModel{N}, simspec::AbstractMC, ::ShortfallSamples
+    sys::SystemModel{N}, simspec::PowerModelMC, ::ShortfallSamples
 ) where {N}
 
     nregions = length(sys.regions)
     shortfall = zeros(Int, nregions, N, simspec.nsamples)
 
-    return AMCShortfallSamplesAccumulator(shortfall)
+    return PMCShortfallSamplesAccumulator(shortfall)
 
 end
 
 function record!(
-    acc::AMCShortfallSamplesAccumulator,
+    acc::PMCShortfallSamplesAccumulator,
     system::SystemModel{N,L,T,P,E},
-    state::SystemState, problem::AbstractDispatchProblem,
+    state::SystemState, problem::PowerModelDispatchProblem,
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
@@ -218,10 +218,10 @@ function record!(
 
 end
 
-reset!(acc::AMCShortfallSamplesAccumulator, sampleid::Int) = nothing
+reset!(acc::PMCShortfallSamplesAccumulator, sampleid::Int) = nothing
 
 function finalize(
-    acc::AMCShortfallSamplesAccumulator,
+    acc::PMCShortfallSamplesAccumulator,
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E}
 
