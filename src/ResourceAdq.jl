@@ -45,7 +45,7 @@ include("./PRASBase/PRASBase.jl")
 include("./ResourceAdequacy/metrics.jl")
 include("./ResourceAdequacy/results/results.jl")
 include("./AbstractMC/AbstractMC.jl")
-include("./NetworkMC/PowerModelMC.jl")
+include("./PowerModelMC/PowerModelMC.jl")
 
 #Imported directly from PRAS
 #SystemModel = _P.SystemModel
