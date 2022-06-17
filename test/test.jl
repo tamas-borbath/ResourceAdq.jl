@@ -11,7 +11,7 @@ ResourceAdq.greet()
 
 #rts = SystemModel("test_inputs/toymodel.pras")
 rts = read_XLSX("test_inputs/small.xlsx")
-smallsample = AbstractMC(samples=1000, seed=10234; verbose = true, threaded=true)
+smallsample = AbstractMC(samples=10, seed=10234; verbose = true, threaded=true)
 @time x = assess(rts, smallsample, Shortfall());
 @show EUE(x[1])
 @show LOLE(x[1])

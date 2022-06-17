@@ -139,9 +139,9 @@ function advance!(
     update_availability!(
         rng, state.lines_available, state.lines_nexttransition,
         system.lines, t, N)
-
-    update_energy!(state.stors_energy, system.storages, t)
-    update_energy!(state.genstors_energy, system.generatorstorages, t)
+#Here we update the problem with the soc from the previous iteration
+   # update_energy!(state.stors_energy, system.storages, t)
+   # update_energy!(state.genstors_energy, system.generatorstorages, t)
 
     update_problem!(dispatchproblem, state, system, t)
 
@@ -152,6 +152,7 @@ function solve!(
     system::SystemModel, t::Int
 )
     optimize!(dispatchproblem.mdl)
+    #We could update the state with the new state for energy in stors and genstors
     #update_state!(state, dispatchproblem, system, t)
 end
 

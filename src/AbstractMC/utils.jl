@@ -60,7 +60,7 @@ function randtransitiontime(
     return t_last + 1
 
 end
-
+#=
 function available_capacity(
     availability::Vector{Bool},
     lines::Lines,
@@ -96,8 +96,8 @@ function available_capacity(
 
     return avcap
 
-end
-
+end=#
+#=
 function update_energy!(
     stors_energy::Vector{Int},
     stors::AbstractAssets,
@@ -118,8 +118,8 @@ function update_energy!(
 
     end
 
-end
-
+end=#
+#=
 function maxtimetocharge_discharge(system::SystemModel)
 
     if length(system.storages) > 0
@@ -175,4 +175,4 @@ function maxtimetocharge_discharge(system::SystemModel)
     return (max(stor_charge_max, genstor_charge_max),
             max(stor_discharge_max, genstor_discharge_max))
 
-end
+end=#
