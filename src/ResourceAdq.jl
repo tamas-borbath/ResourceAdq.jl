@@ -30,6 +30,7 @@ using PRAS.ResourceAdequacy
 
 include("./PRASBase/PRASBase.jl")
 include("./ResourceAdequacy/metrics.jl")
+include("./ResourceAdequacy/utils.jl")
 include("./ResourceAdequacy/results/results.jl")
 include("./AbstractMC/AbstractMC.jl")
 include("./PowerModelMC/PowerModelMC.jl")
