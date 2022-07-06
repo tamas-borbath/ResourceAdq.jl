@@ -1,23 +1,3 @@
-function mean_std(x::MeanVariance)
-    m, v = value(x)
-    return m, sqrt(v)
-end
-
-function mean_std(x::AbstractArray{<:MeanVariance})
-
-    means = similar(x, Float64)
-    vars = similar(means)
-
-    for i in eachindex(x)
-        m, v = mean_std(x[i])
-        means[i] = m
-        vars[i] = v
-    end
-
-    return means, vars
-
-end
-
 function findfirstunique_directional(a::AbstractVector{<:Pair}, i::Pair)
     i_idx = findfirst(isequal(i), a)
     if isnothing(i_idx)
