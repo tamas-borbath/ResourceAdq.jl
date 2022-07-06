@@ -1,5 +1,6 @@
 using Revise
 using ResourceAdq
+using PowerModels
 cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 ResourceAdq.greet()
 #rts_sys = read_XLSX("test_inputs/rts.xlsx")
@@ -8,10 +9,15 @@ ResourceAdq.greet()
 #RTS test
 #resultspecs = (Shortfall())
 
-rts = SystemModel("test_inputs/rts.pras")
-#rts = read_XLSX("test_inputs/small.xlsx")
+#rts = SystemModel("test_inputs/rts.pras")
+
+#Read Input Data
+case5 = read_XLSX("test_inputs/case5/case5.xlsx")
+pm_input = PowerModels.parse_file("test_inputs/case5/case5.m")
+merge!(case5.grid,pm_input)
+
 smallsample = AbstractMC(samples=100, seed=10234; verbose = true, threaded=true)
-@time x = assess(rts, smallsample, Shortfall());
+@time x = assess(case5, smallsample, Shortfall());
 @show EUE(x[1])
 @show LOLE(x[1])
 #=
@@ -26,4 +32,3 @@ GeneratorAvailability())
 #@time x = assess(rts, smallsample, resultspecs...);
 @time x = assess(rts, smallsample, Shortfall());
 =#
-
