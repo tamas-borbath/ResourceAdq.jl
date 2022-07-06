@@ -1,6 +1,11 @@
+using PowerModels
+const _PM = PowerModels
 function PowerModelOptProblem(sys::SystemModel)
-    m = Model(SOLVER.Optimizer)
-    set_optimizer_attribute(m, "OutputFlag", 0)
+    pm_data = _PM.instantiate_model(sys.grid, DCPPowerModel, build_opf_ptdf)
+    m = pm_data.model
+    return m
+    set_optimizer(m, SOLVER.Optimizer)
+    set_optimizer_attribute(m, "OutputFlag", 0) 
     region_name_to_index = Dict([sys.regions.names[i] => i for i in 1:length(sys.regions.names)])
     lines_to_region = Dict(name => [] for name in sys.regions.names)
     lines_from_region = Dict(name => [] for name in sys.regions.names)
