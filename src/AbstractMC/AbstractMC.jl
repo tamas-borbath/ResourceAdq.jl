@@ -26,7 +26,7 @@ function assess(
     method::AbstractMC,
     resultspecs::ResultSpec...
 )
-
+    haskey(system.grid,"type") && @warn "Running a simulation called "*system.grid["type"]
     threads = nthreads()
     sampleseeds = Channel{Int}(2*threads)
     results = resultchannel(method, resultspecs, threads)
