@@ -1,5 +1,5 @@
 function OptProblem(sys::SystemModel, method::AbstractMC)
-    method.verbose && @warn "Building a simulaiton model of type:"*string(method.type)
+    method.verbose && @info "Building a simulaiton model of type:"*string(method.type)
     if method.type == :QCopperplate
         return  OptProblem_QCopperplate(sys::SystemModel)
     elseif method.type == :QNTC
@@ -11,6 +11,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
     elseif method.type == :Copperplate 
         return  OptProblem_Copperplate(sys::SystemModel)
     else
+        @error "Unrecognized method type: "*string(method.type)
         return  OptProblem_Copperplate(sys::SystemModel)    
     end
 end
