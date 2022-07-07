@@ -43,7 +43,7 @@ function update_problem!(
             #print(Mdl)
         end
     end
-    #Update Lines available supply
+    #Update Lines availablility
     for i_line in 1:length(system.lines.names)
         if state.lines_available[i_line]
             set_value(Mdl.obj_dict[:LineCapacity_forward][system.lines.names[i_line]], system.lines.forward_capacity[i_line,t])
@@ -54,6 +54,11 @@ function update_problem!(
             set_value(Mdl.obj_dict[:LineCapacity_backward][system.lines.names[i_line]], 0.0)
             print(Mdl)
         end
+    end
+    #Update Interface limits
+    for i_inter in 1:length(system.interfaces)
+        set_value(Mdl.obj_dict[:NTC_forward][i_inter], system.interfaces.limit_forward[i_inter,t])
+        set_value(Mdl.obj_dict[:NTC_backward][i_inter], system.interfaces.limit_backward[i_inter,t])
     end
     # Update Demand
     for i_region in 1:length(system.regions.names)
