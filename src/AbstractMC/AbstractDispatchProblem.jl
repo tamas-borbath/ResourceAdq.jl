@@ -11,12 +11,12 @@ struct AbstractDispatchProblem
     region_nodes::UnitRange{Int}
     
     function AbstractDispatchProblem(
-        sys::SystemModel; unlimited::Int=999_999_999)
+        sys::SystemModel, method::SimulationSpec)
         nregions = length(sys.regions)
         region_nodes = 1:nregions
         return new(
 
-            OptProblem(sys),
+            OptProblem(sys, method),
             region_nodes
         )
 

@@ -1,7 +1,4 @@
-include("OptProblem.jl")
-include("SystemState.jl")
-include("AbstractDispatchProblem.jl")
-include("utils.jl")
+
 
 struct AbstractMC <: SimulationSpec
 
@@ -9,24 +6,28 @@ struct AbstractMC <: SimulationSpec
     seed::UInt64
     verbose::Bool
     threaded::Bool
+    type::Symbol
 
     function AbstractMC(;
         samples::Int=10_000, seed::Integer=rand(UInt64),
-        verbose::Bool=false, threaded::Bool=true
+        verbose::Bool=false, threaded::Bool=true, type::Symbol
     )
         samples <= 0 && throw(DomainError("Sample count must be positive"))
         seed < 0 && throw(DomainError("Random seed must be non-negative"))
-        new(samples, UInt64(seed), verbose, threaded)
+        new(samples, UInt64(seed), verbose, threaded, type)
     end
 
 end
+include("OptProblem.jl")
+include("SystemState.jl")
+include("AbstractDispatchProblem.jl")
+include("utils.jl")
 
 function assess(
     system::SystemModel,
     method::AbstractMC,
     resultspecs::ResultSpec...
 )
-    haskey(system.grid,"type") && @warn "Running a simulation called "*system.grid["type"]
     threads = nthreads()
     sampleseeds = Channel{Int}(2*threads)
     results = resultchannel(method, resultspecs, threads)
@@ -60,7 +61,7 @@ function assess(
     results::Channel{<:Tuple{Vararg{ResultAccumulator{AbstractMC}}}},
     resultspecs::ResultSpec...
 ) where {R<:ResultSpec, N}
-    dispatchproblem = AbstractDispatchProblem(system)
+    dispatchproblem = AbstractDispatchProblem(system, method)
     systemstate = SystemState(system)
     recorders = accumulator.(system, method, resultspecs)
 
