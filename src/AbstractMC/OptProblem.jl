@@ -104,17 +104,26 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
     elseif method.type == :Nodal
         buses = keys(sys.grid["bus"])
         region_to_bus = Dict([name => [] for name in sys.regions.names])
-        @show region_to_bus
+        bus_to_area = Dict(bus =>string(sys.grid["bus"][bus]["area"]) for bus in buses)
         for bus in buses
-            push!(region_to_bus[string(sys.grid["bus"][bus]["area"])], bus)
+            push!(region_to_bus[bus_to_area[bus]], bus)
         end
-        regional_demand = Dict([name => 0.0000001 for name in sys.regions.names])
-        bus_load = Dict([name => 0.0000001 for name in buses])
+
+        regional_demand = Dict([name => 0.0 for name in sys.regions.names])
+
+        bus_load = Dict([name => 0.0 for name in buses])
         for (load_id,load) in sys.grid["load"]
             bus_load[string(load["load_bus"])] += load["pd"]
-            regional_demand[string(sys.grid["bus"][string(load["load_bus"])]["area"])]+= load["pd"]
+            regional_demand[bus_to_area[string(load["load_bus"])]]+= load["pd"]
         end
-        #@show regional_demand, bus_load
+
+        for bus in buses
+            if regional_demand[bus_to_area[bus]] == 0.0 #no demand in the regional basecase. Assume equal split
+                bus_load[bus] = length(region_to_bus[bus_to_area[bus]])
+            else
+                bus_load[bus] = bus_load[bus]/regional_demand[bus_to_area[bus]]
+            end
+        end
 
         @variables(m, begin
             NodalPosition[bus in buses]
@@ -123,6 +132,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         end)
 
         @constraints(m, begin
+            NodalDemandShare[bus in buses], NodalDemand[bus] == bus_load[bus]*Demand[bus_to_area[bus]]
             ZonalPosition[region_name in sys.regions.names], NetPosition[region_name] == sum(NodalPosition[bus] for bus in region_to_bus[region_name])
             ZonalCurtailment[region_name in sys.regions.names], Curtailment[region_name] == sum(NodalCurtailment[bus] for bus in region_to_bus[region_name])
             PowerConservation, sum(NetPosition) == 0
@@ -133,10 +143,6 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     else
         @error "Unrecognized method type: "*string(method.type)
-    end
-    rm("model.txt")
-    open("model.txt","a") do io
-        print(io,m)
     end
     return m
 end
