@@ -101,8 +101,26 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             end)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
+    elseif method.type == :Nodal
+        buses = keys(sys.grid["bus"])
+        region_to_bus = [name => [] for name in sys.regions.bus] 
+        for bus in buses
+            push!(region_to_bus[string(sys.grid["bus"][bus]["area"])], bus)
+        end
+        @show bus
+        @constraints(m, begin
+            PowerConservation, sum(NetPosition) == 0
+            NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
+            AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
+            end)
+        
+        @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     else
         @error "Unrecognized method type: "*string(method.type)
+    end
+    rm("model.txt")
+    open("model.txt","a") do io
+        print(io,m)
     end
     return m
 end
