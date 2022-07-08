@@ -102,7 +102,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :Nodal
-        buses = keys(sys.grid["bus"])
+        buses = string.(1:length(sys.grid["bus"]))
         region_to_bus = Dict([name => [] for name in sys.regions.names])
         bus_to_area = Dict(bus =>string(sys.grid["bus"][bus]["area"]) for bus in buses)
         for bus in buses
@@ -125,24 +125,49 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             end
         end
 
+        bus_to_generator = Dict(bus => [] for bus in buses)
+        for gen in sys.generators.names
+            push!(bus_to_generator[split(gen,"_")[end]], gen)
+        end
         @variables(m, begin
             NodalPosition[bus in buses]
+            NodalInjection[bus in buses]
             NodalCurtailment[bus in buses] ≥ 0
             NodalDemand[bus in buses] ≥ 0
+            NodalSupply[bus in buses] ≥ 0
+            LineFlow[Line in sys.lines.names]
         end)
 
+        #This has to be refined
+        bus_to_ptdf_index = Dict([buses[i] => i for i in 1:length(buses)])
+        line_to_ptdf_index = Dict()
+        for i in 1:length(sys.grid["branch"])
+            push!(line_to_ptdf_index, "L-"*string(sys.grid["branch"][string(i)]["f_bus"])*"_"*string(sys.grid["branch"][string(i)]["t_bus"]) => i)
+        end
+        @show line_to_ptdf_index
+
+        @show [line=> sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"] for line in sys.lines.names]
+
         @constraints(m, begin
+            NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"]) == bus ? LineFlow[line] : 0.0  for line in sys.lines.names) +sum(string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"]) == bus ? LineFlow[line] : 0.0  for line in sys.lines.names)
+            NodalInjectionComputaiton[bus in buses], NodalInjection[bus] == NodalSupply[bus] + NodalCurtailment[bus] - NodalDemand[bus]
+            NodalSupplyCOmputaiton[bus in buses], NodalSupply[bus] ≤ sum(GeneratorsCapacity[gen] for gen in bus_to_generator[bus])
             NodalDemandShare[bus in buses], NodalDemand[bus] == bus_load[bus]*Demand[bus_to_area[bus]]
+            NodalCurtailmentCap[bus in buses], NodalCurtailment[bus] ≤ NodalDemand[bus]
             ZonalPosition[region_name in sys.regions.names], NetPosition[region_name] == sum(NodalPosition[bus] for bus in region_to_bus[region_name])
             ZonalCurtailment[region_name in sys.regions.names], Curtailment[region_name] == sum(NodalCurtailment[bus] for bus in region_to_bus[region_name])
             PowerConservation, sum(NetPosition) == 0
-            NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
+            LineLimit_forward[line in sys.lines.names], LineFlow[line] ≤ LineCapacity_forward[line]
+            LineLimit_backward[line in sys.lines.names], -LineFlow[line] ≤ LineCapacity_backward[line]
+            LineFlowComp[line in sys.lines.names], LineFlow[line] == sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[bus]]* NodalInjection[bus] for bus in buses)
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
             end)
         
-        @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
+        @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
     else
         @error "Unrecognized method type: "*string(method.type)
     end
     return m
 end
+
+#line_to_ptdf_index[line]
