@@ -108,10 +108,18 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         for bus in buses
             push!(region_to_bus[string(sys.grid["bus"][bus]["area"])], bus)
         end
+        regional_demand = Dict([name => 0.0000001 for name in sys.regions.names])
+        bus_load = Dict([name => 0.0000001 for name in buses])
+        for (load_id,load) in sys.grid["load"]
+            bus_load[string(load["load_bus"])] += load["pd"]
+            regional_demand[string(sys.grid["bus"][string(load["load_bus"])]["area"])]+= load["pd"]
+        end
+        #@show regional_demand, bus_load
 
         @variables(m, begin
             NodalPosition[bus in buses]
             NodalCurtailment[bus in buses] ≥ 0
+            NodalDemand[bus in buses] ≥ 0
         end)
 
         @constraints(m, begin
