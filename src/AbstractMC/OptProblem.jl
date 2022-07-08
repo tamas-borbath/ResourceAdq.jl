@@ -43,7 +43,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             end)
         
         @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
-    elseif method.type == :QNTC
+    elseif method.type == :QNTC_line
         @constraints(m, begin
             PowerConservation, sum(NetPosition) == 0
             NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
@@ -53,14 +53,32 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             end)
 
         @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
+    elseif method.type == :QNTC 
+        @constraints(m, begin
+            PowerConservation, sum(NetPosition) == 0
+            NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
+            ExportLimit[name in sys.regions.names], NetPosition[name] ≤ sum(NTC_forward[inter] for inter in ints_from_region[name]) + sum(NTC_backward[inter] for inter in ints_to_region[name])
+            ImportLimit[name in sys.regions.names], NetPosition[name] ≥ -(sum(NTC_backward[inter] for inter in ints_from_region[name]) + sum(NTC_forward[inter] for inter in ints_to_region[name]))
+            AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
+            end)
+        
+        @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
     elseif method.type == :NTC 
         @constraints(m, begin
             PowerConservation, sum(NetPosition) == 0
             NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
-          #  ExportLimit[name in sys.regions.names], NetPosition[name] ≤ sum(LineCapacity_forward[line] for line in lines_from_region[name]) + sum(LineCapacity_backward[line] for line in lines_to_region[name])
-          #  ImportLimit[name in sys.regions.names], NetPosition[name] ≥ -(sum(LineCapacity_backward[line] for line in lines_from_region[name]) + sum(LineCapacity_forward[line] for line in lines_to_region[name]))
             ExportLimit[name in sys.regions.names], NetPosition[name] ≤ sum(NTC_forward[inter] for inter in ints_from_region[name]) + sum(NTC_backward[inter] for inter in ints_to_region[name])
             ImportLimit[name in sys.regions.names], NetPosition[name] ≥ -(sum(NTC_backward[inter] for inter in ints_from_region[name]) + sum(NTC_forward[inter] for inter in ints_to_region[name]))
+            AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
+            end)
+        
+        @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
+    elseif method.type == :NTC_Line
+        @constraints(m, begin
+            PowerConservation, sum(NetPosition) == 0
+            NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
+            ExportLimit[name in sys.regions.names], NetPosition[name] ≤ sum(LineCapacity_forward[line] for line in lines_from_region[name]) + sum(LineCapacity_backward[line] for line in lines_to_region[name])
+            ImportLimit[name in sys.regions.names], NetPosition[name] ≥ -(sum(LineCapacity_backward[line] for line in lines_from_region[name]) + sum(LineCapacity_forward[line] for line in lines_to_region[name]))
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
             end)
         
