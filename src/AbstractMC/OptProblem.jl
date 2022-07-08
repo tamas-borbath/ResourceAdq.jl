@@ -116,6 +116,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
 
         @constraints(m, begin
             ZonalPosition[region_name in sys.regions.names], NetPosition[region_name] == sum(NodalPosition[bus] for bus in region_to_bus[region_name])
+            ZonalCurtailment[region_name in sys.regions.names], Curtailment[region_name] == sum(NodalCurtailment[bus] for bus in region_to_bus[region_name])
             PowerConservation, sum(NetPosition) == 0
             NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
