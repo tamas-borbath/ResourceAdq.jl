@@ -144,9 +144,6 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         for i in 1:length(sys.grid["branch"])
             push!(line_to_ptdf_index, "L-"*string(sys.grid["branch"][string(i)]["f_bus"])*"_"*string(sys.grid["branch"][string(i)]["t_bus"]) => i)
         end
-        @show line_to_ptdf_index
-
-        @show [line=> sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"] for line in sys.lines.names]
 
         @constraints(m, begin
             NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"]) == bus ? LineFlow[line] : 0.0  for line in sys.lines.names) +sum(string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"]) == bus ? LineFlow[line] : 0.0  for line in sys.lines.names)
@@ -163,7 +160,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
             end)
         
-        @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
+        @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     else
         @error "Unrecognized method type: "*string(method.type)
     end
