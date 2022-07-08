@@ -83,6 +83,12 @@ function assess(
                     ), recorders)
 
         end
+        if method.verbose && !method.threaded
+            rm("model.txt")
+            open("model.txt","a") do io
+                print(io,dispatchproblem.mdl)
+            end
+        end
 
         foreach(recorder -> reset!(recorder, s), recorders)
 
