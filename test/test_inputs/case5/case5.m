@@ -74,6 +74,25 @@ mpc.branch = [
 	4	 5	 0.00297	 0.0297	 0.00674	 240.0	 240.0	 240.0	 0.0	 0.0	 1	 -30.0	 30.0;
 ];
 
+% bus names
+%column_names%	name
+mpc.bus_name = {
+	'ONE';
+	'TWO';
+	'THREE';
+	'FOUR';
+	'FIVE';
+};
+
+% generator names types and fuels
+%column_names%	name    type    fuel
+mpc.gen_name = {
+	'SOLAR_1'	'PV'	'Solar';
+	'FOSSIL_1'	'CT'	'Gas';
+	'FOSSIL_3'	'CT'	'Gas';
+	'WIND_4'	'WIND'	'Wind';
+	'FOSSIL_5'	'CT'	'Gas';
+};
 % INFO    : === Translation Options ===
 % INFO    : Phase Angle Bound:           30.0 (deg.)
 % INFO    : Line Capacity Model:         stat
