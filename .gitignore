@@ -3,3 +3,7 @@
 .DS_Store
 /.DS_Store
 test/test_inputs/rts_gmlc/RTS-GMLC/
+test/test_inputs/case5/case5_good.xlsx
+test/test_inputs/rts_gmlc/~$rts-gmlc.XLSX
+test/test_inputs/~$rts.XLSX
+test/test_inputs/case5/~$case5.XLSX
