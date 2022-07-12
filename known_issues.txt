@@ -1,0 +1,1 @@
+Lines need an interface but for internal lines this interface does not validate now.
