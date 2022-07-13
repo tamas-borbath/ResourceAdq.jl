@@ -87,11 +87,11 @@ mpc.bus_name = {
 % generator names types and fuels
 %column_names%	name    type    fuel
 mpc.gen_name = {
-	'SOLAR_1'	'PV'	'Solar';
-	'FOSSIL_1'	'CT'	'Gas';
-	'FOSSIL_3'	'CT'	'Gas';
-	'WIND_4'	'WIND'	'Wind';
-	'FOSSIL_5'	'CT'	'Gas';
+	'1_SOLAR_1'	'PV'	'Solar';
+	'1_FOSSIL_1'	'CT'	'Gas';
+	'3_FOSSIL_1'	'CT'	'Gas';
+	'4_WIND_1'	'WIND'	'Wind';
+	'5_FOSSIL_1'	'CT'	'Gas';
 };
 % INFO    : === Translation Options ===
 % INFO    : Phase Angle Bound:           30.0 (deg.)
