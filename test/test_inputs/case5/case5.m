@@ -85,11 +85,11 @@ mpc.area_name = {
 % bus names
 %column_names%	name
 mpc.bus_name = {
-	'Bus_1';
-	'Bus_2';
-	'Bus_3';
-	'Bus_4';
-	'Bus_5';
+	'Center';
+	'North';
+	'West';
+	'South';
+	'East';
 };
 
 % generator names types and fuels
@@ -105,12 +105,12 @@ mpc.gen_name = {
 % branch names 
 %column_names%	name
 mpc.branch_name = {
-	'L12';
-	'L14';
-	'L15';
-	'L23';
-	'L34';
-	'L45';
+	'Center-North';
+	'Center-South';
+	'Center-East';
+	'North-West';
+	'West-South';
+	'South-East';
 };
 
 % INFO    : === Translation Options ===

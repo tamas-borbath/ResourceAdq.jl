@@ -102,9 +102,10 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :Nodal
-        buses = string.(1:length(sys.grid["bus"]))
+        @show buses = [sys.grid["bus"][string(i)]["name"] for i in 1:length(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
+        @show bus_name_to_number = Dict([bus["name"]=>id for (id,bus) in sys.grid["bus"]])
         region_to_bus = Dict([name => [] for name in sys.regions.names])
-        bus_to_area = Dict(bus =>string(sys.grid["area_name"][string(sys.grid["bus"][bus]["area"])]["name"]) for bus in buses)
+        bus_to_area = Dict(bus =>string(sys.grid["area_name"][string(sys.grid["bus"][bus_name_to_number[bus]]["area"])]["name"]) for bus in buses)
         for bus in buses
             push!(region_to_bus[bus_to_area[bus]], bus)
         end
@@ -113,8 +114,8 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
 
         bus_load = Dict([name => 0.0 for name in buses])
         for (load_id,load) in sys.grid["load"]
-            bus_load[string(load["load_bus"])] += load["pd"]
-            regional_demand[bus_to_area[string(load["load_bus"])]]+= load["pd"]
+            bus_load[sys.grid["bus"][string(load["load_bus"])]["name"]] += load["pd"]
+            regional_demand[bus_to_area[sys.grid["bus"][string(load["load_bus"])]["name"]]]+= load["pd"]
         end
 
         for bus in buses
@@ -126,7 +127,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         end
         bus_to_generator = Dict(bus => [] for bus in buses)
         for gen in values(sys.grid["gen"])
-            push!(bus_to_generator[string(gen["gen_bus"])], string(gen["name"]))
+            push!(bus_to_generator[sys.grid["bus"][string(gen["gen_bus"])]["name"]], string(gen["name"]))
         end
         @variables(m, begin
             NodalPosition[bus in buses]
@@ -145,7 +146,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         end
 
         @constraints(m, begin
-            NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"]) == bus ? LineFlow[line] : 0.0  for line in sys.lines.names) +sum(string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"]) == bus ? LineFlow[line] : 0.0  for line in sys.lines.names)
+            NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in sys.lines.names) +sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in sys.lines.names)
             NodalInjectionComputaiton[bus in buses], NodalInjection[bus] == NodalSupply[bus] + NodalCurtailment[bus] - NodalDemand[bus]
             NodalSupplyComputaiton[bus in buses], NodalSupply[bus] ≤ sum(GeneratorsCapacity[gen] for gen in bus_to_generator[bus])
             NodalDemandShare[bus in buses], NodalDemand[bus] == bus_load[bus]*Demand[bus_to_area[bus]]
