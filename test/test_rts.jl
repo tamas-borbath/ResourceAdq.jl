@@ -14,28 +14,29 @@ ResourceAdq.greet()
 
 #Read Input Data
 
-case5 = read_XLSX("test_inputs/rts_gmlc/rts-gmlc.xlsx")
+rts = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
 pm_input = PowerModels.make_basic_network(PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m"))
 pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input)
-merge!(case5.grid,pm_input)
+merge!(rts.grid,pm_input)
+validate(rts)
 
 ENS_df = DataFrame(Case=String[], Area_1=String[], Area_2=String[], Area_3=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[])
 for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
-    smallsample = AbstractMC(samples=500, seed=10232; type = i_type, verbose = true, threaded=true)
-    @time x = assess(case5, smallsample, Shortfall());
-    push!(ENS_df, Dict(:Case => string(i_type), :Area_1 => string(EUE(x[1],"1")), :Area_2 => string(EUE(x[1],"2")), :Area_3 => string(EUE(x[1],"3")), :Total => string(EUE(x[1]))); cols = :union)
-    push!(LOLE_df, Dict(:Case => string(i_type), :Area_1 => string(LOLE(x[1],"1")), :Area_2 => string(LOLE(x[1],"2")), :Area_3 => string(LOLE(x[1],"3")), :Total => string(LOLE(x[1]))); cols = :union)
+    smallsample = AbstractMC(samples=10, seed=10232; type = i_type, verbose = true, threaded=true)
+    @time x = assess(rts, smallsample, Shortfall());
+    push!(ENS_df, Dict(:Case => string(i_type), :Area_A => string(EUE(x[1],"A")), :Area_B => string(EUE(x[1],"B")), :Area_C => string(EUE(x[1],"C")), :Total => string(EUE(x[1]))); cols = :union)
+    push!(LOLE_df, Dict(:Case => string(i_type), :Area_A => string(LOLE(x[1],"A")), :Area_B => string(LOLE(x[1],"B")), :Area_C => string(LOLE(x[1],"C")), :Total => string(LOLE(x[1]))); cols = :union)
     @info "This is case:"*string(i_type)
-    println("    1: "*string(EUE(x[1],"1")))
-    println("    2: "*string(EUE(x[1],"2")))
-    println("    3: "*string(EUE(x[1],"3")))
+    println("    1: "*string(EUE(x[1],"A")))
+    println("    2: "*string(EUE(x[1],"B")))
+    println("    3: "*string(EUE(x[1],"C")))
     println("Total: "*string(EUE(x[1])))
     println(" ")
 
-    println("    1: "*string(LOLE(x[1],"1")))
-    println("    2: "*string(LOLE(x[1],"2")))
-    println("    3: "*string(LOLE(x[1],"3")))
+    println("    1: "*string(LOLE(x[1],"A")))
+    println("    2: "*string(LOLE(x[1],"B")))
+    println("    3: "*string(LOLE(x[1],"C")))
     println("Total: "*string(LOLE(x[1])))
 end
 
