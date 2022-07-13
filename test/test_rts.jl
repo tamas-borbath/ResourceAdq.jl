@@ -13,23 +13,25 @@ ResourceAdq.greet()
 
 #rts = SystemModel("test_inputs/rts.pras")
 
+
 #Read Input Data
 
-samples_no = 100
+samples_no = 10
 seed = 10232
 threaded = true
 case = "RTS_GMLC"
 
 rts = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
-pm_input = PowerModels.make_basic_network(PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m"))
-pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input)
+pm_input =PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m")
+pm_input_simple =  PowerModels.make_basic_network(pm_input)
+pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input_simple)
 merge!(rts.grid,pm_input)
 validate(rts)
 
 ENS_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 Perf_df  = DataFrame(Case=String[],Took = Float64[], Bytes = Int64[], GC_Time=Float64[] )
-for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
+for i_type in [:Nodal]#Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
     smallsample = AbstractMC(samples=samples_no, seed=seed; type = i_type, verbose = true, threaded=threaded)
     stats = @timed assess(rts, smallsample, Shortfall());
     x=stats.value
