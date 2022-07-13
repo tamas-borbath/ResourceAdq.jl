@@ -102,7 +102,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :Nodal
-        buses = [sys.grid["bus"][string(i)]["name"] for i in 1:length(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
+        buses = [sys.grid["bus"][string(i)]["name"] for i in keys(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
         bus_name_to_number = Dict([bus["name"]=>id for (id,bus) in sys.grid["bus"]])
         region_to_bus = Dict([name => [] for name in sys.regions.names])
         bus_to_area = Dict(bus =>string(sys.grid["area_name"][string(sys.grid["bus"][bus_name_to_number[bus]]["area"])]["name"]) for bus in buses)
@@ -145,8 +145,16 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             push!(line_to_ptdf_index, sys.grid["branch"][string(i)]["name"] => i)
         end
 
+        ACLines = String[]
+        for i in 1:length(sys.lines.categories)
+            if split(sys.lines.categories[i],"_")[end]=="AC"
+                push!(ACLines, sys.lines.names[i])
+            end
+        end
+
+
         @constraints(m, begin
-            NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in sys.lines.names) +sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in sys.lines.names)
+            NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in ACLines) +sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in ACLines)
             NodalInjectionComputaiton[bus in buses], NodalInjection[bus] == NodalSupply[bus] + NodalCurtailment[bus] - NodalDemand[bus]
             NodalSupplyComputaiton[bus in buses], NodalSupply[bus] ≤ sum(GeneratorsCapacity[gen] for gen in bus_to_generator[bus])
             NodalDemandShare[bus in buses], NodalDemand[bus] == bus_load[bus]*Demand[bus_to_area[bus]]
@@ -156,7 +164,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             PowerConservation, sum(NetPosition) == 0
             LineLimit_forward[line in sys.lines.names], LineFlow[line] ≤ LineCapacity_forward[line]
             LineLimit_backward[line in sys.lines.names], -LineFlow[line] ≤ LineCapacity_backward[line]
-            LineFlowComp[line in sys.lines.names], LineFlow[line] == sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[bus]]* NodalInjection[bus] for bus in buses)
+            LineFlowComp[line in ACLines], LineFlow[line] == sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[bus]]* NodalInjection[bus] for bus in buses)
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
             end)
         
