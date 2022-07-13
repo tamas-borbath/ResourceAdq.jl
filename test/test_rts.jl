@@ -2,6 +2,7 @@ using Revise
 using ResourceAdq
 using PowerModels
 using DataFrames
+using Dates
 cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 ResourceAdq.greet()
 #rts_sys = read_XLSX("test_inputs/rts.xlsx")
@@ -14,6 +15,11 @@ ResourceAdq.greet()
 
 #Read Input Data
 
+samples_no = 100
+seed = 10232
+threaded = true
+case = "RTS_GMLC"
+
 rts = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
 pm_input = PowerModels.make_basic_network(PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m"))
 pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input)
@@ -22,9 +28,12 @@ validate(rts)
 
 ENS_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
+Perf_df  = DataFrame(Case=String[],Took = Float64[], Bytes = Int64[], GC_Time=Float64[] )
 for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
-    smallsample = AbstractMC(samples=10, seed=10232; type = i_type, verbose = true, threaded=true)
-    @time x = assess(rts, smallsample, Shortfall());
+    smallsample = AbstractMC(samples=samples_no, seed=seed; type = i_type, verbose = true, threaded=threaded)
+    stats = @timed assess(rts, smallsample, Shortfall());
+    x=stats.value
+    push!(Perf_df,Dict([:Case => string(i_type), :Took => stats.time, :Bytes => stats.bytes, :GC_Time=>stats.gctime]) )
     push!(ENS_df, Dict(:Case => string(i_type), :Area_A => string(EUE(x[1],"A")), :Area_B => string(EUE(x[1],"B")), :Area_C => string(EUE(x[1],"C")), :Total => string(EUE(x[1]))); cols = :union)
     push!(LOLE_df, Dict(:Case => string(i_type), :Area_A => string(LOLE(x[1],"A")), :Area_B => string(LOLE(x[1],"B")), :Area_C => string(LOLE(x[1],"C")), :Total => string(LOLE(x[1]))); cols = :union)
     @info "This is case:"*string(i_type)
@@ -46,6 +55,15 @@ end
 
 open("LOLE_debug_rts.txt","w") do io
     print(io, LOLE_df)
+end
+open("Perf_debug_rts.txt","w") do io
+    println(io, "Simulation finished on "*string(now()))
+    println(io, "Case: "*string(case))
+    println(io, "Number of MC years: "*string(samples_no))
+    println(io, "Randomizer Seed: "*string(seed))
+    println(io, "Threaded execution: "*string(threaded))
+    println(io, "Number of threads used: "*string(Threads.nthreads()))
+    print(io, Perf_df)
 end
 #=
 #smallsample = MonteCarloAPI(samples=100, seed=10233; verbose = true, threaded=false)

@@ -2,9 +2,9 @@
  Row │ Case          Area_A                           Area_B                           Area_C                           Total
      │ String        String                           String                           String                           String
 ─────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 │ Copperplate   LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h
-   2 │ QCopperplate  LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h
-   3 │ Nodal         LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h
-   4 │ NTC           LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h
+   1 │ Copperplate   LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 78±2 event-h/8784h        LOLE = 78±2 event-h/8784h
+   2 │ QCopperplate  LOLE = 78±2 event-h/8784h        LOLE = 78±2 event-h/8784h        LOLE = 78±2 event-h/8784h        LOLE = 78±2 event-h/8784h
+   3 │ Nodal         LOLE = 76±2 event-h/8784h        LOLE = 24±2 event-h/8784h        LOLE = 14±1 event-h/8784h        LOLE = 83±3 event-h/8784h
+   4 │ NTC           LOLE = 0.00000 event-h/8784h     LOLE = 0.00000 event-h/8784h     LOLE = 78±2 event-h/8784h        LOLE = 78±2 event-h/8784h
    5 │ QNTC          LOLE = 8784.00000 event-h/8784h  LOLE = 8784.00000 event-h/8784h  LOLE = 8784.00000 event-h/8784h  LOLE = 8784.00000 event-h/8784h
-   6 │ Autarky       LOLE = 15±5 event-h/8784h        LOLE = 11±6 event-h/8784h        LOLE = 0.6±0.3 event-h/8784h     LOLE = 27±9 event-h/8784h
+   6 │ Autarky       LOLE = 313±8 event-h/8784h       LOLE = 410±5 event-h/8784h       LOLE = 30±1 event-h/8784h        LOLE = 585±8 event-h/8784h

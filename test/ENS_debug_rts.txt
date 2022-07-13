@@ -1,10 +1,10 @@
 6×5 DataFrame
- Row │ Case          Area_A                         Area_B                         Area_C                         Total
-     │ String        String                         String                         String                         String
-─────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 │ Copperplate   EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h
-   2 │ QCopperplate  EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h
-   3 │ Nodal         EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h
-   4 │ NTC           EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h        EUE = 0.00000 MWh/8784h
-   5 │ QNTC          EUE = 0.2154±0.0001 MWh/8784h  EUE = 0.2154±0.0001 MWh/8784h  EUE = 0.2154±0.0001 MWh/8784h  EUE = 0.6463±0.0004 MWh/8784h
-   6 │ Autarky       EUE = 2200±900 MWh/8784h       EUE = 1300±900 MWh/8784h       EUE = 60±40 MWh/8784h          EUE = 4000±2000 MWh/8784h
+ Row │ Case          Area_A                      Area_B                      Area_C                      Total
+     │ String        String                      String                      String                      String
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ Copperplate   EUE = 0.00000 MWh/8784h     EUE = 0.00000 MWh/8784h     EUE = 24600±1000 MWh/8784h  EUE = 24600±1000 MWh/8784h
+   2 │ QCopperplate  EUE = 8200±400 MWh/8784h    EUE = 8200±400 MWh/8784h    EUE = 8200±400 MWh/8784h    EUE = 24600±1000 MWh/8784h
+   3 │ Nodal         EUE = 18700±900 MWh/8784h   EUE = 4300±500 MWh/8784h    EUE = 2100±200 MWh/8784h    EUE = 25100±1000 MWh/8784h
+   4 │ NTC           EUE = 0.00000 MWh/8784h     EUE = 0.00000 MWh/8784h     EUE = 24600±1000 MWh/8784h  EUE = 24600±1000 MWh/8784h
+   5 │ QNTC          EUE = 8200±400 MWh/8784h    EUE = 8200±400 MWh/8784h    EUE = 8200±400 MWh/8784h    EUE = 24600±1000 MWh/8784h
+   6 │ Autarky       EUE = 71000±3000 MWh/8784h  EUE = 93000±2000 MWh/8784h  EUE = 4800±300 MWh/8784h    EUE = 168000±4000 MWh/8784h
