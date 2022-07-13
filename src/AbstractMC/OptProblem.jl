@@ -141,7 +141,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         bus_to_ptdf_index = Dict([buses[i] => i for i in 1:length(buses)])
         line_to_ptdf_index = Dict()
         for i in 1:length(sys.grid["branch"])
-            push!(line_to_ptdf_index, "L-"*string(sys.grid["branch"][string(i)]["f_bus"])*"_"*string(sys.grid["branch"][string(i)]["t_bus"]) => i)
+            push!(line_to_ptdf_index, sys.grid["branch"][string(i)]["name"] => i)
         end
 
         @constraints(m, begin
