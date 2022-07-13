@@ -91,7 +91,7 @@ function record!(
 
     for r in keys(regionindex_to_name)
 
-        regionshortfall = value(CurtailmentVars[regionindex_to_name[r]])
+        regionshortfall = round(value(CurtailmentVars[regionindex_to_name[r]]);digits = 2)
         isregionshortfall = regionshortfall > 0
       #  isregionshortfall && @warn "Shortfall in region "*regionindex_to_name[r]*" as period "*string(t)
         fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
