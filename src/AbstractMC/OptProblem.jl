@@ -102,8 +102,8 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :Nodal
-        @show buses = [sys.grid["bus"][string(i)]["name"] for i in 1:length(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
-        @show bus_name_to_number = Dict([bus["name"]=>id for (id,bus) in sys.grid["bus"]])
+        buses = [sys.grid["bus"][string(i)]["name"] for i in 1:length(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
+        bus_name_to_number = Dict([bus["name"]=>id for (id,bus) in sys.grid["bus"]])
         region_to_bus = Dict([name => [] for name in sys.regions.names])
         bus_to_area = Dict(bus =>string(sys.grid["area_name"][string(sys.grid["bus"][bus_name_to_number[bus]]["area"])]["name"]) for bus in buses)
         for bus in buses
