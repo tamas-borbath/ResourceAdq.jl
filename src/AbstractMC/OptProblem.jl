@@ -104,7 +104,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
     elseif method.type == :Nodal
         buses = string.(1:length(sys.grid["bus"]))
         region_to_bus = Dict([name => [] for name in sys.regions.names])
-        bus_to_area = Dict(bus =>string(sys.grid["bus"][bus]["area"]) for bus in buses)
+        bus_to_area = Dict(bus =>string(sys.grid["area_name"][string(sys.grid["bus"][bus]["area"])]["name"]) for bus in buses)
         for bus in buses
             push!(region_to_bus[bus_to_area[bus]], bus)
         end
