@@ -20,8 +20,8 @@ pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input)
 merge!(rts.grid,pm_input)
 validate(rts)
 
-ENS_df = DataFrame(Case=String[], Area_1=String[], Area_2=String[], Area_3=String[], Total=String[])
-LOLE_df = DataFrame(Case=String[])
+ENS_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
+LOLE_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
     smallsample = AbstractMC(samples=10, seed=10232; type = i_type, verbose = true, threaded=true)
     @time x = assess(rts, smallsample, Shortfall());
@@ -40,11 +40,11 @@ for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
     println("Total: "*string(LOLE(x[1])))
 end
 
-open("ENS_debug.txt","w") do io
+open("ENS_debug_rts.txt","w") do io
     print(io, ENS_df)
 end
 
-open("LOLE_debug.txt","w") do io
+open("LOLE_debug_rts.txt","w") do io
     print(io, LOLE_df)
 end
 #=
