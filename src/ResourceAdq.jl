@@ -34,8 +34,10 @@ include("./ResourceAdequacy/utils.jl")
 include("./ResourceAdequacy/results/results.jl")
 include("./AbstractMC/AbstractMC.jl")
 include("./PowerModelMC/PowerModelMC.jl")
+include("validate.jl")
 
 export SystemModel, SequentialMonteCarlo, assess, MonteCarloAPI, AbstractMC, PowerModelMC
 export Shortfall, Surplus, Flow, Utilization, ShortfallSamples, SurplusSamples, FlowSamples, UtilizationSamples, GeneratorAvailability
 export LOLE, EUE
+export validate
 end

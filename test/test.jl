@@ -18,11 +18,12 @@ case5 = read_XLSX("test_inputs/case5/case5.xlsx")
 pm_input = PowerModels.make_basic_network(PowerModels.parse_file("test_inputs/case5/case5.m"))
 pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input)
 merge!(case5.grid,pm_input)
+validate(case5)
 
 ENS_df = DataFrame(Case=String[], Area_1=String[], Area_2=String[], Area_3=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[])
-for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
-    smallsample = AbstractMC(samples=10, seed=10232; type = i_type, verbose = true, threaded=true)
+for i_type in [:Nodal]#[:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
+    smallsample = AbstractMC(samples=10, seed=10232; type = i_type, verbose = true, threaded=false)
     @time x = assess(case5, smallsample, Shortfall());
     push!(ENS_df, Dict(:Case => string(i_type), :Area_1 => string(EUE(x[1],"1")), :Area_2 => string(EUE(x[1],"2")), :Area_3 => string(EUE(x[1],"3")), :Total => string(EUE(x[1]))); cols = :union)
     push!(LOLE_df, Dict(:Case => string(i_type), :Area_1 => string(LOLE(x[1],"1")), :Area_2 => string(LOLE(x[1],"2")), :Area_3 => string(LOLE(x[1],"3")), :Total => string(LOLE(x[1]))); cols = :union)
@@ -39,11 +40,11 @@ for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
     println("Total: "*string(LOLE(x[1])))
 end
 
-open("ENS.txt","w") do io
+open("debug/ENS_debug.txt","w") do io
     print(io, ENS_df)
 end
 
-open("LOLE.txt","w") do io
+open("debug/LOLE_debug.txt","w") do io
     print(io, LOLE_df)
 end
 #=
