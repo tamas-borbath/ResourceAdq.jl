@@ -1,0 +1,76 @@
+Min Curtailment[Area_1] + Curtailment[Area_2] + Curtailment[Area_3]
+Subject to
+ NodalPositionComputaiton[1] : NodalPosition[1] - NodalInjection[1] + LineFlow[L12] + LineFlow[L14] + LineFlow[L15] = 0.0
+ NodalPositionComputaiton[2] : NodalPosition[2] - NodalInjection[2] - LineFlow[L12] + LineFlow[L23] = 0.0
+ NodalPositionComputaiton[3] : NodalPosition[3] - NodalInjection[3] - LineFlow[L23] + LineFlow[L34] = 0.0
+ NodalPositionComputaiton[4] : NodalPosition[4] - NodalInjection[4] - LineFlow[L14] - LineFlow[L34] + LineFlow[L45] = 0.0
+ NodalPositionComputaiton[5] : NodalPosition[5] - NodalInjection[5] - LineFlow[L15] - LineFlow[L45] = 0.0
+ NodalInjectionComputaiton[1] : NodalInjection[1] - NodalCurtailment[1] + NodalDemand[1] - NodalSupply[1] = 0.0
+ NodalInjectionComputaiton[2] : NodalInjection[2] - NodalCurtailment[2] + NodalDemand[2] - NodalSupply[2] = 0.0
+ NodalInjectionComputaiton[3] : NodalInjection[3] - NodalCurtailment[3] + NodalDemand[3] - NodalSupply[3] = 0.0
+ NodalInjectionComputaiton[4] : NodalInjection[4] - NodalCurtailment[4] + NodalDemand[4] - NodalSupply[4] = 0.0
+ NodalInjectionComputaiton[5] : NodalInjection[5] - NodalCurtailment[5] + NodalDemand[5] - NodalSupply[5] = 0.0
+ NodalDemandShare[1] : NodalDemand[1] = 0.0
+ NodalDemandShare[2] : NodalDemand[2] = 114.0
+ NodalDemandShare[3] : NodalDemand[3] = 128.57142857143197
+ NodalDemandShare[4] : NodalDemand[4] = 171.42857142856124
+ NodalDemandShare[5] : NodalDemand[5] = 48.0
+ ZonalPosition[Area_1] : NetPosition[Area_1] - NodalPosition[1] - NodalPosition[2] = 0.0
+ ZonalPosition[Area_2] : NetPosition[Area_2] - NodalPosition[3] - NodalPosition[4] = 0.0
+ ZonalPosition[Area_3] : NetPosition[Area_3] - NodalPosition[5] = 0.0
+ ZonalCurtailment[Area_1] : Curtailment[Area_1] - NodalCurtailment[1] - NodalCurtailment[2] = 0.0
+ ZonalCurtailment[Area_2] : Curtailment[Area_2] - NodalCurtailment[3] - NodalCurtailment[4] = 0.0
+ ZonalCurtailment[Area_3] : Curtailment[Area_3] - NodalCurtailment[5] = 0.0
+ PowerConservation : NetPosition[Area_1] + NetPosition[Area_2] + NetPosition[Area_3] = 0.0
+ LineFlowComp[L12] : -0.1939166051164976 NodalInjection[1] + 0.4758947156382194 NodalInjection[2] + 0.3489894581346942 NodalInjection[3] - 0.1595380380044315 NodalInjection[5] + LineFlow[L12] = 0.0
+ LineFlowComp[L14] : -0.4375881286510439 NodalInjection[1] - 0.258342845632176 NodalInjection[2] - 0.1894514201302624 NodalInjection[3] - 0.36001017786526324 NodalInjection[5] + LineFlow[L14] = 0.0
+ LineFlowComp[L23] : -0.19391660511649772 NodalInjection[1] - 0.524105284361781 NodalInjection[2] + 0.34898945813469373 NodalInjection[3] - 0.15953803800443164 NodalInjection[5] + LineFlow[L23] = 0.0
+ LineFlowComp[L34] : -0.19391660511649755 NodalInjection[1] - 0.5241052843617805 NodalInjection[2] - 0.6510105418653056 NodalInjection[3] - 0.15953803800443148 NodalInjection[5] + LineFlow[L34] = 0.0
+ LineFlowComp[L15] : -0.3684952662324583 NodalInjection[1] - 0.21755187000604295 NodalInjection[2] - 0.1595380380044316 NodalInjection[3] + 0.5195482158696951 NodalInjection[5] + LineFlow[L15] = 0.0
+ LineFlowComp[L45] : 0.368495266232458 NodalInjection[1] + 0.21755187000604298 NodalInjection[2] + 0.15953803800443148 NodalInjection[3] + 0.48045178413030476 NodalInjection[5] + LineFlow[L45] = 0.0
+ NodalSupplyComputaiton[1] : NodalSupply[1] ≤ 400.0
+ NodalSupplyComputaiton[2] : NodalSupply[2] ≤ 0.0
+ NodalSupplyComputaiton[3] : NodalSupply[3] ≤ 800.0
+ NodalSupplyComputaiton[4] : NodalSupply[4] ≤ 36.0
+ NodalSupplyComputaiton[5] : NodalSupply[5] ≤ 200.0
+ NodalCurtailmentCap[1] : NodalCurtailment[1] - NodalDemand[1] ≤ 0.0
+ NodalCurtailmentCap[2] : NodalCurtailment[2] - NodalDemand[2] ≤ 0.0
+ NodalCurtailmentCap[3] : NodalCurtailment[3] - NodalDemand[3] ≤ 0.0
+ NodalCurtailmentCap[4] : NodalCurtailment[4] - NodalDemand[4] ≤ 0.0
+ NodalCurtailmentCap[5] : NodalCurtailment[5] - NodalDemand[5] ≤ 0.0
+ LineLimit_forward[L12] : LineFlow[L12] ≤ 400.0
+ LineLimit_forward[L14] : LineFlow[L14] ≤ 426.0
+ LineLimit_forward[L23] : LineFlow[L23] ≤ 426.0
+ LineLimit_forward[L34] : LineFlow[L34] ≤ 426.0
+ LineLimit_forward[L15] : LineFlow[L15] ≤ 426.0
+ LineLimit_forward[L45] : LineFlow[L45] ≤ 240.0
+ LineLimit_backward[L12] : -LineFlow[L12] ≤ 400.0
+ LineLimit_backward[L14] : -LineFlow[L14] ≤ 426.0
+ LineLimit_backward[L23] : -LineFlow[L23] ≤ 426.0
+ LineLimit_backward[L34] : -LineFlow[L34] ≤ 426.0
+ LineLimit_backward[L15] : -LineFlow[L15] ≤ 426.0
+ LineLimit_backward[L45] : -LineFlow[L45] ≤ 240.0
+ AvailableSupply[Area_1] : Supply[Area_1] ≤ 400.0
+ AvailableSupply[Area_2] : Supply[Area_2] ≤ 836.0
+ AvailableSupply[Area_3] : Supply[Area_3] ≤ 200.0
+ Curtailment[Area_1] ≥ 0.0
+ Curtailment[Area_2] ≥ 0.0
+ Curtailment[Area_3] ≥ 0.0
+ Supply[Area_1] ≥ 0.0
+ Supply[Area_2] ≥ 0.0
+ Supply[Area_3] ≥ 0.0
+ NodalCurtailment[1] ≥ 0.0
+ NodalCurtailment[2] ≥ 0.0
+ NodalCurtailment[3] ≥ 0.0
+ NodalCurtailment[4] ≥ 0.0
+ NodalCurtailment[5] ≥ 0.0
+ NodalDemand[1] ≥ 0.0
+ NodalDemand[2] ≥ 0.0
+ NodalDemand[3] ≥ 0.0
+ NodalDemand[4] ≥ 0.0
+ NodalDemand[5] ≥ 0.0
+ NodalSupply[1] ≥ 0.0
+ NodalSupply[2] ≥ 0.0
+ NodalSupply[3] ≥ 0.0
+ NodalSupply[4] ≥ 0.0
+ NodalSupply[5] ≥ 0.0
