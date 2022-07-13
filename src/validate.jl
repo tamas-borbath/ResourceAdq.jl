@@ -9,10 +9,17 @@ function validate(sys::SystemModel)
         end
 
         @assert haskey(sys.grid,"branch")
-        @assert length(sys.lines.names) == length(sys.grid["branch"])
+        @assert sum([split(category,"_")[end] == "AC" ? 1 : 0 for category in sys.lines.categories]) == length(sys.grid["branch"])
         for (i_obj_id, i_obj) in sys.grid["branch"]
             @assert haskey(i_obj,"name")
             @assert i_obj["name"] in sys.lines.names "Line not found in XLSX file with name: "*i_obj["name"]
+        end
+
+
+        @assert sum([split(category,"_")[end] == "DC" ? 1 : 0 for category in sys.lines.categories]) == length(sys.grid["dcline"])
+        for (i_obj_id, i_obj) in sys.grid["dcline"]
+            @assert haskey(i_obj,"name")
+            @assert i_obj["name"] in sys.lines.names "DCLine not found in XLSX file with name: "*i_obj["name"]
         end
 
         @assert haskey(sys.grid,"area_name")
