@@ -1,16 +1,11 @@
-Simulation finished on 2022-07-13T15:56:04.579
+Simulation finished on 2022-07-14T13:29:54.568
 Case: RTS_GMLC
-Number of MC years: 100
+Number of MC years: 3
 Randomizer Seed: 10232
-Threaded execution: true
+Threaded execution: false
 Number of threads used: 32
-6×4 DataFrame
- Row │ Case          Took      Bytes        GC_Time
-     │ String        Float64   Int64        Float64
-─────┼───────────────────────────────────────────────
-   1 │ Copperplate    16.9149  15644065008   2.395
-   2 │ QCopperplate   21.1883  16202206112   1.90728
-   3 │ Nodal         238.816   80400511696  16.1649
-   4 │ NTC            15.3186  16741308832   1.29431
-   5 │ QNTC           53.298   18876577120   3.76338
-   6 │ Autarky        16.6901  15648013360   3.77164
+1×4 DataFrame
+ Row │ Case    Took     Bytes       GC_Time
+     │ String  Float64  Int64       Float64
+─────┼──────────────────────────────────────
+   1 │ Nodal     52.96  4965382175  1.80078
