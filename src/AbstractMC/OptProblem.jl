@@ -166,8 +166,6 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
                 end
             end
         end
-        @show dcline_to_bus
-
 
         @constraints(m, begin
             NodalPositionComputaiton[bus in buses], NodalPosition[bus] == NodalInjection[bus] - sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["f_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in ACLines) +sum(sys.grid["bus"][string(sys.grid["branch"][string(line_to_ptdf_index[line])]["t_bus"])]["name"] == bus ? LineFlow[line] : 0.0  for line in ACLines)
