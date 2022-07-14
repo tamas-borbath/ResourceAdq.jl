@@ -16,15 +16,17 @@ ResourceAdq.greet()
 
 #Read Input Data
 
-samples_no = 10
+samples_no = 3
 seed = 10232
-threaded = true
+threaded = false
 case = "RTS_GMLC"
 
 rts = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
 pm_input =PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m")
 pm_input_simple =  PowerModels.make_basic_network(pm_input)
 pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input_simple)
+
+
 merge!(rts.grid,pm_input)
 validate(rts)
 

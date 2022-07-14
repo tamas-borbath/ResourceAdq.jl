@@ -932,3 +932,9 @@ mpc.branch_name = {
 mpc.dcline = [
 	113 316 1 0 0 0 0 1 1 -100 100 -9999 9999 -9999 9999 0 0 0 0 0 0 0 0
 ];
+
+% branch names 
+%column_names%	name
+mpc.dcline_name = {
+	'HVDC';
+};

@@ -22,8 +22,8 @@ validate(case5)
 
 ENS_df = DataFrame(Case=String[], Area_1=String[], Area_2=String[], Area_3=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[])
-for i_type in [:NTC]#[:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
-    smallsample = AbstractMC(samples=10, seed=10232; type = i_type, verbose = true, threaded=false)
+for i_type in [:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
+    smallsample = AbstractMC(samples=100, seed=10232; type = i_type, verbose = true, threaded=false)
     @time x = assess(case5, smallsample, Shortfall());
     push!(ENS_df, Dict(:Case => string(i_type), :Area_1 => string(EUE(x[1],"Area_1")), :Area_2 => string(EUE(x[1],"Area_2")), :Area_3 => string(EUE(x[1],"Area_3")), :Total => string(EUE(x[1]))); cols = :union)
     push!(LOLE_df, Dict(:Case => string(i_type), :Area_1 => string(LOLE(x[1],"Area_1")), :Area_2 => string(LOLE(x[1],"Area_2")), :Area_3 => string(LOLE(x[1],"Area_3")), :Total => string(LOLE(x[1]))); cols = :union)
@@ -40,11 +40,11 @@ for i_type in [:NTC]#[:Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
     println("Total: "*string(LOLE(x[1])))
 end
 
-open("debug/ENS_debug.txt","w") do io
+open("debug/ENS_debug_case5.txt","w") do io
     print(io, ENS_df)
 end
 
-open("debug/LOLE_debug.txt","w") do io
+open("debug/LOLE_debug_case5.txt","w") do io
     print(io, LOLE_df)
 end
 #=
