@@ -151,6 +151,22 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
                 push!(ACLines, sys.lines.names[i])
             end
         end
+        DCLines = String[]
+        for i in 1:length(sys.lines.categories)
+            if split(sys.lines.categories[i],"_")[end]=="DC"
+                push!(DCLines, sys.lines.names[i])
+            end
+        end
+        dcline_to_bus = Dict()
+        for dcline in DCLines
+            for (i_dcline,pm_dcline) in sys.grid["dcline"]
+                if pm_dcline["name"] == dcline
+                    push!(dcline_to_bus, dcline => (sys.grid["bus"][string(pm_dcline["f_bus"])]["name"], sys.grid["bus"][string(pm_dcline["t_bus"])]["name"]))
+                    break 
+                end
+            end
+        end
+        @show dcline_to_bus
 
 
         @constraints(m, begin
@@ -164,7 +180,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             PowerConservation, sum(NetPosition) == 0
             LineLimit_forward[line in sys.lines.names], LineFlow[line] ≤ LineCapacity_forward[line]
             LineLimit_backward[line in sys.lines.names], -LineFlow[line] ≤ LineCapacity_backward[line]
-            LineFlowComp[line in ACLines], LineFlow[line] == sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[bus]]* NodalInjection[bus] for bus in buses)
+            LineFlowComp[line in ACLines], LineFlow[line] == sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[bus]]* NodalInjection[bus] for bus in buses) + sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[dcline_to_bus[dcline][2]]]* LineFlow[dcline] - sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[dcline_to_bus[dcline][1]]]* LineFlow[dcline] for dcline in DCLines)
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
             end)
         
