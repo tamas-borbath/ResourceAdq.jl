@@ -36,11 +36,11 @@ mpc.baseMVA = 100.0;
 %% bus data
 %	bus_i	type	Pd	Qd	Gs	Bs	area	Vm	Va	baseKV	zone	Vmax	Vmin
 mpc.bus = [
-	1	 2	 0.0	 0.0	 0.0	 0.0	 1	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
+	1	 2	 0.0	 0.0001	 0.0	 0.0	 1	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
 	2	 1	 300.0	 98.61	 0.0	 0.0	 1	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
 	3	 2	 300.0	 98.61	 0.0	 0.0	 2	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
 	4	 3	 400.0	 131.47	 0.0	 0.0	 2	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
-	5	 2	 0.0	 0.0	 0.0	 0.0	 3	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
+	5	 2	 0.0	 0.0001	 0.0	 0.0	 3	    1.00000	    0.00000	 230.0	 1	    1.10000	    0.90000;
 ];
 
 %% generator data
@@ -111,6 +111,17 @@ mpc.branch_name = {
 	'North-West';
 	'West-South';
 	'South-East';
+};
+
+% CNECs 
+%column_names%	name    CNE    Contingency
+mpc.CNECs = {
+	'Center-North'    'Center-North'    '';
+	'Center-South'    'Center-North'    '';
+	'Center-East'    'Center-North'    '';
+	'North-West'    'Center-North'    '';
+	'West-South'    'Center-North'    '';
+	'South-East'    'Center-North'    '';
 };
 
 % INFO    : === Translation Options ===
