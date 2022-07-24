@@ -3,13 +3,11 @@ using ResourceAdq
 using PowerModels
 using DataFrames
 using Dates
+using Gurobi
+using XLSX
 cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 
-samples_no = 3
 seed = 10232
-threaded = true
-case = "RTS_GMLC"
-case = "case5"
 function read_model(p_case)
     if p_case=="RTS_GMLC"
         sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
@@ -20,8 +18,8 @@ function read_model(p_case)
     else 
         @error "Unrecognized test case with name: "*p_case
     end
-    pm_input_simple =  PowerModels.make_basic_network(pm_input)
-    pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input_simple)
+    pm_input["simple"] =  PowerModels.make_basic_network(pm_input)
+    pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input["simple"])
     merge!(sys.grid,pm_input)
     validate(sys)
     return sys
@@ -75,30 +73,32 @@ function compute_net_positions(p_solution, p_input)
     return Dict([p_input["area_name"][string(i)]["name"]=> NetPositions[i]*100 for i in 1:length(p_input["area_name"])])
 end
 
-function compute_basecase_flows_and_NPs(p_sysModel)
+function compute_basecase_flows_and_NPs!(p_sysModel)
     base_Flows = DataFrame(TimeStamp = Int64[])
+    base_Flows_DC = DataFrame(TimeStamp = Int64[])
     base_NPs = DataFrame(TimeStamp = Int64[])
     input = deepcopy(p_sysModel.grid)
-    for ts in 1:size(p_sysModel.regions.load)[2]
+    for ts in 1:10#size(p_sysModel.regions.load)[2]
         @info "Running basecase powerflow for timestep: "*string(ts)
         input = update_input!(input, p_sysModel, ts)
         solution = PowerModels.solve_dc_opf(input, Gurobi.Optimizer)
         i_flows = Dict([p_sysModel.grid["branch"][i_line_id]["name"] => i_line["pf"]*100 for (i_line_id, i_line) in solution["solution"]["branch"]])
-        if haskey(solution,"dcline")
-            merge!(i_flows,Dict([p_sysModel.grid["dcline"][i_line_id]["name"] => i_line["pf"]*100 for (i_line_id, i_line) in solution["solution"]["dcline"]]))
+        if haskey(solution["solution"],"dcline")
+            push!(base_Flows_DC, merge(Dict("TimeStamp"=>ts),Dict([p_sysModel.grid["dcline"][i_line_id]["name"] => i_line["pf"]*100 for (i_line_id, i_line) in solution["solution"]["dcline"]])), cols = :union)
         end
         push!(base_Flows, merge(Dict("TimeStamp"=>ts), i_flows), cols=:union)
         push!(base_NPs,merge(Dict("TimeStamp"=>ts),compute_net_positions(solution, input)), cols=:union)
     end
-    return base_Flows, base_NPs
+    p_sysModel.grid["bc_flows"] = base_Flows
+    p_sysModel.grid["bc_flows_DC"] = base_Flows_DC
+    p_sysModel.grid["bc_NP"] = base_NPs
 end
-#sysModel = read_model(case)
-#df_Flows, df_NPs = compute_basecase_flows_and_NPs(sysModel)
+
 function get_GSK_proportional!(p_sysModel)
-    branch_to_index = Dict([i_line["name"]=> i_line["index"] for i_line in values(p_sysModel.grid["branch"])])
-    bus_to_index = Dict([i_bus["name"]=> i_bus["index"] for i_bus in values(p_sysModel.grid["bus"])])
-    gen_to_bus = Dict([i_gen["name"]=> p_sysModel.grid["bus"][string(i_gen["gen_bus"])]["name"] for i_gen in values(p_sysModel.grid["gen"])])
-    gen_to_area = Dict([i_gen["name"]=> p_sysModel.grid["area_name"][string(p_sysModel.grid["bus"][string(i_gen["gen_bus"])]["area"])]["name"] for i_gen in values(p_sysModel.grid["gen"])])
+    branch_to_index = Dict([i_line["name"]=> i_line["index"] for i_line in values(p_sysModel.grid["simple"]["branch"])])
+    bus_to_index = Dict([i_bus["name"]=> i_bus["index"] for i_bus in values(p_sysModel.grid["simple"]["bus"])])
+    gen_to_bus = Dict([i_gen["name"]=> p_sysModel.grid["simple"]["bus"][string(i_gen["gen_bus"])]["name"] for i_gen in values(p_sysModel.grid["simple"]["gen"])])
+    gen_to_area = Dict([i_gen["name"]=> p_sysModel.grid["area_name"][string(p_sysModel.grid["simple"]["bus"][string(i_gen["gen_bus"])]["area"])]["name"] for i_gen in values(p_sysModel.grid["simple"]["gen"])])
     area_to_index = Dict([i_area["name"]=> i_area["index"] for i_area in values(p_sysModel.grid["area_name"])])
     n_area = length(p_sysModel.grid["area_name"])
     n_bus = size(p_sysModel.grid["ptdf"])[2]
@@ -120,23 +120,109 @@ function get_GSK_proportional!(p_sysModel)
     p_sysModel.grid["GSK"] = GSK
     p_sysModel.grid["br_to_idx"] = branch_to_index
     p_sysModel.grid["bus_to_idx"] = bus_to_index
+    p_sysModel.grid["area_to_idx"] = area_to_index
 end
 
 function compute_zPTDF!(p_sysModel)
     p_sysModel.grid["zPTDF"] = p_sysModel.grid["ptdf"]*p_sysModel.grid["GSK"]
 end
-function add_virtual_areas_to_zptdf(p_sysModel)
+function add_virtual_areas_to_zPTDF!(p_sysModel)
+    for (i_dcline_id,i_dcline) in p_sysModel.grid["dcline"]
+        f_bus_name = p_sysModel.grid["bus"][string(i_dcline["f_bus"])]["name"]
+        f_bus_ptdf_col = p_sysModel.grid["ptdf"][:,p_sysModel.grid["bus_to_idx"][f_bus_name]]
+        p_sysModel.grid["zPTDF"] = [p_sysModel.grid["zPTDF"] f_bus_ptdf_col]
+        push!(p_sysModel.grid["area_to_idx"], "Virtual_"*i_dcline["name"]*"_f"=>maximum(values(p_sysModel.grid["area_to_idx"]))+1)
+
+        t_bus_name = p_sysModel.grid["bus"][string(i_dcline["t_bus"])]["name"]
+        t_bus_ptdf_col = p_sysModel.grid["ptdf"][:,p_sysModel.grid["bus_to_idx"][t_bus_name]]
+        p_sysModel.grid["zPTDF"] = [p_sysModel.grid["zPTDF"] t_bus_ptdf_col]
+        push!(p_sysModel.grid["area_to_idx"], "Virtual_"*i_dcline["name"]*"_t"=>maximum(values(p_sysModel.grid["area_to_idx"]))+1)
+        @info "Created two new areas for HVDC link "*i_dcline["name"]*" connecting bus "*f_bus_name*" to "*t_bus_name
+    end
 end
+function compute_f0!(p_sysModel)
+    @info "F0 computation"
+    n_area = length(p_sysModel.grid["area_to_idx"])
+    F0_flows = DataFrame(TimeStamp = Int64[])
+    for i_row in 1:size(p_sysModel.grid["bc_flows"])[1]
+        @info "Computing F0 for timestep "*string(i_row)
+        i_f0_flows = Dict(:TimeStamp =>p_sysModel.grid["bc_flows"][i_row,:TimeStamp] )
+        for i_cnec in setdiff(names(p_sysModel.grid["bc_flows"]),["TimeStamp"])
+            cnec_name = string(i_cnec)
+            bc_flow = p_sysModel.grid["bc_flows"][i_row,Symbol(i_cnec)]
+            @info "Flow on CNEC "*string(i_cnec)*" in base case is: "*string(bc_flow)
+            deltas = zeros(n_area)
+            br_idx =  p_sysModel.grid["br_to_idx"][cnec_name]
+            for (i_area_name, i_area_index) in p_sysModel.grid["area_to_idx"]
+                if split(i_area_name,"_")[1] == "Virtual"
+                    dc_link_name = split(i_area_name,"_")[2]
+                    if split(i_area_name,"_")[end] == "f"
+                        np_area = p_sysModel.grid["bc_flows_DC"][i_row, Symbol(dc_link_name)]
+                    else
+                        np_area = -p_sysModel.grid["bc_flows_DC"][i_row, Symbol(dc_link_name)]
+                    end
+                else
+                    np_area = p_sysModel.grid["bc_NP"][i_row, Symbol(i_area_name)]
+                end
+                area_idx =  p_sysModel.grid["area_to_idx"][i_area_name]
+                delta_flow = p_sysModel.grid["zPTDF"][br_idx, area_idx] * np_area
+                deltas[area_idx] = delta_flow
+                @info "Flows induced by area "*i_area_name*" with net position "*string(np_area)*" is "*string(delta_flow)
+            end
+            total_delta = sum(deltas)
+            newflow = bc_flow-total_delta
+            @info "Total change: "*string(total_delta)*" F0 flow:"*string(newflow)
+            push!(i_f0_flows, Symbol(i_cnec)=>newflow)
+        end
+        push!(F0_flows, i_f0_flows; cols=:union)
+    end
+    p_sysModel.grid["F0_flows"] = F0_flows
+end
+function compute_RAM!(p_sysModel)
+    RAM_direct = DataFrame()
+    RAM_opposite = DataFrame()
+    RAM_p_direct = DataFrame()
+    RAM_p_opposite = DataFrame()
+    RAM_direct[!,:TimeStamp] = p_sysModel.grid["F0_flows"][:,1]
+    RAM_opposite[!,:TimeStamp] = p_sysModel.grid["F0_flows"][:,1]
+    RAM_p_direct[!,:TimeStamp] = p_sysModel.grid["F0_flows"][:,1]
+    RAM_p_opposite[!,:TimeStamp] = p_sysModel.grid["F0_flows"][:,1]
 
-get_GSK_proportional!(sysModel)
-compute_zPTDF!(sysModel)
-sysModel.grid
-#=
-
-=#
-
-#sysModel_rts = read_model("RTS_GMLC")
-
-
-
-
+    for i_col in 2:size(p_sysModel.grid["F0_flows"])[2]
+        cnec_name = names(p_sysModel.grid["F0_flows"][:,[i_col]])[1]
+        @show cnec_limit = p_sysModel.grid["simple"]["branch"][string(p_sysModel.grid["br_to_idx"][cnec_name])]["rate_a"]*100
+        @show p_sysModel.grid["F0_flows"][:,i_col]
+        @show RAM_direct[!,Symbol(cnec_name)] = cnec_limit.-p_sysModel.grid["F0_flows"][:,i_col]
+        @show RAM_opposite[!,Symbol(cnec_name)] = p_sysModel.grid["F0_flows"][:,i_col].+cnec_limit
+        @show RAM_p_direct[!,Symbol(cnec_name)] = (cnec_limit.-p_sysModel.grid["F0_flows"][:,i_col])./cnec_limit.*100
+        @show RAM_p_opposite[!,Symbol(cnec_name)] = (p_sysModel.grid["F0_flows"][:,i_col].+cnec_limit)./cnec_limit.*100
+    end
+    p_sysModel.grid["RAM_direct"] = RAM_direct
+    p_sysModel.grid["RAM_opposite"] = RAM_opposite
+    p_sysModel.grid["RAM_p_direct"] = RAM_p_direct
+    p_sysModel.grid["RAM_p_opposite"] = RAM_p_opposite
+end
+function export_to_xlsx(sModel, filename)
+    XLSX.writetable(filename, "bc_flows" => sModel.grid["bc_flows"], 
+        "bc_flows_DC" => sModel.grid["bc_flows_DC"],
+        "bc_NP" => sModel.grid["bc_NP"],
+        "F0_flows" => sModel.grid["F0_flows"],
+        "RAM_direct" => sModel.grid["RAM_direct"],
+        "RAM_opposite" => sModel.grid["RAM_opposite"],
+        "RAM_p_direct" => sModel.grid["RAM_p_direct"],
+        "RAM_p_opposite" => sModel.grid["RAM_p_opposite"])
+end
+function main()
+    case = "RTS_GMLC"
+    sysModel = read_model(case)
+    compute_basecase_flows_and_NPs!(sysModel)
+    get_GSK_proportional!(sysModel)
+    compute_zPTDF!(sysModel)
+    add_virtual_areas_to_zPTDF!(sysModel)
+    sysModel.grid["zPTDF"]
+    compute_f0!(sysModel)
+    compute_RAM!(sysModel)
+    export_to_xlsx(sysModel, "report_"*case*".xlsx")
+    return sysModel
+end
+main()
