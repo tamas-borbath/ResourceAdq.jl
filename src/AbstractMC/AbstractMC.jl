@@ -165,3 +165,4 @@ end
 
 
 include("result_shortfall.jl")
+include("result_availability.jl")
