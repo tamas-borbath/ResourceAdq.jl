@@ -209,9 +209,11 @@ function record!(
     state::SystemState, problem::AbstractDispatchProblem,
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
-
-    for (r, e) in enumerate(problem.region_unserved_edges)
-        acc.shortfall[r, t, sampleid] = problem.fp.edges[e].flow
+    CurtailmentVars = problem.mdl.obj_dict[:Curtailment]
+    regionindex_to_name = Dict([i=>axes(CurtailmentVars)[1][i] for i in 1:length(axes(CurtailmentVars)[1])])
+    
+    for r in keys(regionindex_to_name)
+        acc.shortfall[r, t, sampleid] = round(value(CurtailmentVars[regionindex_to_name[r]]);digits = 2)
     end
 
     return
