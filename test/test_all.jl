@@ -5,11 +5,11 @@ using DataFrames
 using Dates
 cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 
-samples_no = 3
+samples_no = 1
 seed = 10232
 threaded = true
 case = "RTS_GMLC"
-case = "case5"
+#case = "case5"
 function read_model(p_case)
     if p_case=="RTS_GMLC"
         sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
@@ -20,9 +20,12 @@ function read_model(p_case)
     else 
         @error "Unrecognized test case with name: "*p_case
     end
-    pm_input_simple =  PowerModels.make_basic_network(pm_input)
-    pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input_simple)
+    pm_input["simple"] =  PowerModels.make_basic_network(pm_input)
+    pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input["simple"])
     merge!(sys.grid,pm_input)
+    compute_GSK_proportional!(sys)
+    compute_zPTDF!(sys)
+    add_virtual_areas_to_zPTDF!(sys)
     validate(sys)
     return sys
 end
@@ -31,8 +34,8 @@ sysModel = read_model(case)
 ENS_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 Perf_df  = DataFrame(Case=String[],Took = Float64[], Bytes = Int64[], GC_Time=Float64[] )
-for i_type in [:Nodal]#Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
-    smallsample = AbstractMC(samples=samples_no, seed=seed; type = i_type, verbose = true, threaded=threaded)
+for i_type in [:FB_fixed,:FB_fixed_evolved, :Nodal, :Copperplate]#[:FB_fixed_evolved, :FB_fixed, :Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
+    smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = true, threaded=threaded)
     stats = @timed assess(sysModel, smallsample, Shortfall());
     x=stats.value
     push!(Perf_df,Dict([:Case => string(i_type), :Took => stats.time, :Bytes => stats.bytes, :GC_Time=>stats.gctime]) )
@@ -43,7 +46,7 @@ end
 open("Perf_debug_"*case*".txt","w") do io
     println(io, "Simulation finished on "*string(now()))
     println(io, "Case: "*string(case))
-    println(io, "Number of MC years: "*string(samples_no))
+    println(io, "Number of MC years (per thread): "*string(samples_no))
     println(io, "Randomizer Seed: "*string(seed))
     println(io, "Threaded execution: "*string(threaded))
     println(io, "Number of threads used: "*string(Threads.nthreads()))
