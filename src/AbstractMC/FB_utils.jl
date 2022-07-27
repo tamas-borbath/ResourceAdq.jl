@@ -43,3 +43,78 @@ function compute_GSK_proportional!(p_sysModel)
     p_sysModel.grid["bus_to_idx"] = bus_to_index
     p_sysModel.grid["area_to_idx"] = area_to_index
 end
+function compute_NTCs!(sys)
+    minram = 1
+    NTCs = DataFrame()
+    br_limits = Dict([sys.lines.names[i] => sys.lines.forward_capacity[i,1] for i in 1:length(sys.lines)])
+    for i_int in 1:length(sys.interfaces)
+        from_area = sys.regions.names[sys.interfaces.regions_from[i_int]]
+        to_area = sys.regions.names[sys.interfaces.regions_to[i_int]]
+        push!(NTCs, Dict(:Name=>from_area*">"*to_area, :F_area => from_area, :T_area=>to_area), cols = :union)
+        push!(NTCs, Dict(:Name=>to_area*">"*from_area, :F_area => to_area, :T_area=>from_area), cols = :union)
+    end
+    for i in 1:length(sys.grid["dcline"])
+        from_area = "Virtual_"*sys.grid["dcline"][string(i)]["name"]*"_f"
+        to_area = "Virtual_"*sys.grid["dcline"][string(i)]["name"]*"_t"
+        push!(NTCs, Dict(:Name=>from_area*">"*to_area, :F_area => from_area, :T_area=>to_area), cols = :union)
+        push!(NTCs, Dict(:Name=>to_area*">"*from_area, :F_area => to_area, :T_area=>from_area), cols = :union)
+    end
+    n_NTC = size(NTCs)[1]
+    zPTDF = sys.grid["zPTDF"]
+    n_cnec = size(zPTDF)[1]
+    ztzPTDF = zeros(n_cnec, n_NTC)
+    ztzPTDF_o = zeros(n_cnec, n_NTC)
+    NTC_to_idx = Dict()
+    for i in 1:n_NTC
+        i_NTC = NTCs[i,:]
+        from_idx = sys.grid["area_to_idx"][i_NTC[:F_area]]
+        to_idx = sys.grid["area_to_idx"][i_NTC[:T_area]]
+        ztzPTDF[:,i] = max.(0,zPTDF[:,from_idx]-zPTDF[:,to_idx])
+        ztzPTDF_o[:,i] = max.(0,-(zPTDF[:,from_idx]-zPTDF[:,to_idx]))
+        push!(NTC_to_idx, i_NTC[:Name]=>i)
+    end
+    @show NTC_to_idx
+    RAM = zeros(n_cnec)
+    for (br_name, br_id) in sys.grid["br_to_idx"]
+        RAM[br_id] = minram * br_limits[br_name]
+    end
+    RAM = [RAM; RAM]
+    ztzPTDF = [ztzPTDF; ztzPTDF_o]
+    n_cnec = n_cnec *2 
+    #add HVDC limits
+    for i_NTC in eachrow(NTCs)
+        if split(i_NTC[:F_area],"_")[1] == "Virtual"
+            n_cnec +=1
+            ztz = zeros(n_NTC)
+            ztz[NTC_to_idx[i_NTC[:Name]]] = 1
+            ztzPTDF = [ztzPTDF; transpose(ztz)]
+            RAM = [RAM; 100]
+        end
+    end
+    ATC = ones(n_NTC) 
+    for i in 1:10
+        #@info "Iteration "*string(1)*" :"*string(ATC)
+        RAM_ATC = RAM - ztzPTDF*ATC
+        increment = ones(n_NTC)*500
+        for i_cnec in 1:n_cnec
+            n_non_zero_borders = sum([value == 0.0 ? 0 : 1 for value in ztzPTDF[i_cnec,:]])
+            share = RAM_ATC[i_cnec]/n_non_zero_borders
+            for i_area in 1:n_NTC
+                if ztzPTDF[i_cnec, i_area] != 0.0 
+                    increment[i_area] = min(increment[i_area],share/ztzPTDF[i_cnec, i_area])
+                end
+            end
+        end
+        delta = sum(increment)
+        ATC = ATC + increment
+        #@info "Changes after this iteration:"*string(increment)        
+        if delta <0.001
+           # @info "Converged"
+            ATC = round.(ATC)
+            break
+        end
+        
+    end
+    sys.grid["NTC"] = ATC
+    sys.grid["NTC_to_idx"] = NTC_to_idx
+end
