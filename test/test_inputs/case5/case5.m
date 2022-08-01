@@ -116,12 +116,12 @@ mpc.branch_name = {
 % CNECs 
 %column_names%	name    CNE    Contingency
 mpc.CNECs = {
-	'Center-North'    'Center-North'    '';
-	'Center-South'    'Center-North'    '';
-	'Center-East'    'Center-North'    '';
-	'North-West'    'Center-North'    '';
-	'West-South'    'Center-North'    '';
-	'South-East'    'Center-North'    '';
+	'bc_Center-North'    'Center-North'    '';
+	'bc_Center-South'    'Center-South'    '';
+	'bc_Center-East'    'Center-East'    '';
+	'bc_North-West'    'North-West'    '';
+	'bc_West-South'    'West-South'    '';
+	'bc_South-East'    'South-East'    '';
 };
 
 % INFO    : === Translation Options ===
