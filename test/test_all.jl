@@ -6,35 +6,16 @@ using Dates
 cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 
 samples_no = 1
-seed = 10232
-threaded = true
+seed = Int64(round(rand(1)[1]*10000))
+threaded = false
 case = "RTS_GMLC"
 #case = "case5"
-function read_model(p_case)
-    if p_case=="RTS_GMLC"
-        sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
-        pm_input =PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m")
-    elseif p_case == "case5"
-        sys = read_XLSX("test_inputs/case5/case5.xlsx")
-        pm_input =PowerModels.parse_file("test_inputs/case5/case5.m")
-    else 
-        @error "Unrecognized test case with name: "*p_case
-    end
-    pm_input["simple"] =  PowerModels.make_basic_network(pm_input)
-    pm_input["ptdf"] = PowerModels.calc_basic_ptdf_matrix(pm_input["simple"])
-    merge!(sys.grid,pm_input)
-    compute_GSK_proportional!(sys)
-    compute_zPTDF!(sys)
-    add_virtual_areas_to_zPTDF!(sys)
-    validate(sys)
-    return sys
-end
-sysModel = read_model(case)
 
+sysModel = read_test_model(case)
 ENS_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 LOLE_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
 Perf_df  = DataFrame(Case=String[],Took = Float64[], Bytes = Int64[], GC_Time=Float64[] )
-for i_type in [:FB_fixed,:FB_fixed_evolved, :Nodal, :Copperplate]#[:FB_fixed_evolved, :FB_fixed, :Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
+for i_type in [:NTC_f,:FB_fixed,:FB_fixed_evolved, :Nodal, :Copperplate]#[:FB_fixed_evolved, :FB_fixed, :Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
     smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = true, threaded=threaded)
     stats = @timed assess(sysModel, smallsample, Shortfall());
     x=stats.value
