@@ -27,7 +27,7 @@ function compute_NTCs!(sys)
     sys.grid["RAM_ztz"] = RAM_f
     ATC = zeros(n_NTC) 
     for i in 1:10
-        @info "Iteration "*string(i)
+     #   @info "Iteration "*string(i)
         RAM_ATC = RAM_f.data - ztzPTDF.data*ATC
         increment = ones(n_NTC)*500
         Constraining_element = string.(zeros(n_NTC))
@@ -53,9 +53,9 @@ function compute_NTCs!(sys)
         new_NTCs[!,:Value] = ATC
         new_NTCs[!,:Increment] = increment
         new_NTCs[!,:Constrained_by] = Constraining_element
-        @show new_NTCs
+     #   @show new_NTCs
         if delta <0.001
-            @info "Converged"
+         #   @info "Converged"
             ATC = round.(ATC)
             break
         end
@@ -181,10 +181,8 @@ function compute_final_domain!(sys)
     for i_cnec in cnecs
         limit = br_limits[cnecs_to_cne[i_cnec]]
         minram = sys.grid["minram"]*limit
-        
-        @show i_cnec, minram, F_zero[i_cnec]
-        @show RAM_f[i_cnec] = max(minram, limit - F_zero[i_cnec])
-        @show RAM_f[i_cnec*"_Opposite"] = max(minram, limit + F_zero[i_cnec])
+        RAM_f[i_cnec] = max(minram, limit - F_zero[i_cnec])
+        RAM_f[i_cnec*"_Opposite"] = max(minram, limit + F_zero[i_cnec])
         @assert RAM_f[i_cnec] ≥ minram "Min RAM not reached on: "*i_cnec
         @assert RAM_f[i_cnec*"_Opposite"] ≥ minram "Min RAM not reached on: "*i_cnec
     end
@@ -217,14 +215,11 @@ function compute_NTCs_f!(sys)
     sys.grid["ztzPTDF"] = ztzPTDF
     ATC = zeros(n_NTC) 
     for i in 1:10
-        @info "Iteration "*string(i)
+       # @info "Iteration "*string(i)
         RAM_ATC = RAM.data - ztzPTDF.data*ATC
         increment = ones(n_NTC)*500
         Constraining_element = string.(zeros(n_NTC))
         for i_cnec in 1:length(cnecs)
-
-            RAM_ATC_n = RAM[cnecs[i_cnec]] - sum(ztzPTDF[cnecs[i_cnec],borders[i]] * ATC[i] for i in 1:n_NTC)
-            @show RAM_ATC_n, RAM_ATC[i_cnec]
             n_non_zero_borders = sum([value == 0.0 ? 0 : 1 for value in ztzPTDF[cnecs[i_cnec],:].data])
             share = RAM_ATC[i_cnec]/n_non_zero_borders
             for i_border in 1:length(borders)
@@ -246,7 +241,7 @@ function compute_NTCs_f!(sys)
         new_NTCs[!,:Value] = ATC
         new_NTCs[!,:Increment] = increment
         new_NTCs[!,:Constrained_by] = Constraining_element
-        @show new_NTCs
+       # @show new_NTCs
         if delta <0.001
             @info "Converged"
             ATC = round.(ATC)
