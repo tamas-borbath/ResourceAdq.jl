@@ -83,6 +83,23 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             end)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
+    elseif method.type == :NTC_f
+        areas = sys.grid["zPTDF"].axes[2]
+        maxnp  = JuMP.Containers.DenseAxisArray(zeros(length(areas)), areas)
+        minnp  = JuMP.Containers.DenseAxisArray(zeros(length(areas)), areas)
+        for i_ntc in eachrow(sys.grid["NTC_df"])
+            maxnp[i_ntc[:F_area]] += i_ntc[:Value]
+            minnp[i_ntc[:T_area]] += i_ntc[:Value]
+        end
+        @constraints(m, begin
+            PowerConservation, sum(NetPosition) == 0
+            NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
+            ExportLimit[area in sys.regions.names], NetPosition[area] ≤ maxnp[area]
+            ImportLimit[area in sys.regions.names], NetPosition[area] ≥ -minnp[area]
+            AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
+            end)
+        
+        @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :Autarky 
         @constraints(m, begin
             PowerConservation, sum(NetPosition) == 0
@@ -102,7 +119,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :Nodal
-        buses = [sys.grid["bus"][string(i)]["name"] for i in keys(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
+        buses = [string(sys.grid["bus"][string(i)]["name"]) for i in keys(sys.grid["bus"])]#string.(1:length(sys.grid["bus"]))
         bus_name_to_number = Dict([bus["name"]=>id for (id,bus) in sys.grid["bus"]])
         region_to_bus = Dict([name => [] for name in sys.regions.names])
         bus_to_area = Dict(bus =>string(sys.grid["area_name"][string(sys.grid["bus"][bus_name_to_number[bus]]["area"])]["name"]) for bus in buses)
@@ -161,7 +178,7 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         for dcline in DCLines
             for (i_dcline,pm_dcline) in sys.grid["dcline"]
                 if pm_dcline["name"] == dcline
-                    push!(dcline_to_bus, dcline => (sys.grid["bus"][string(pm_dcline["f_bus"])]["name"], sys.grid["bus"][string(pm_dcline["t_bus"])]["name"]))
+                    push!(dcline_to_bus, dcline => (string(sys.grid["bus"][string(pm_dcline["f_bus"])]["name"]), string(sys.grid["bus"][string(pm_dcline["t_bus"])]["name"])))
                     break 
                 end
             end
@@ -178,25 +195,15 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             PowerConservation, sum(NetPosition) == 0
             LineLimit_forward[line in sys.lines.names], LineFlow[line] ≤ LineCapacity_forward[line]
             LineLimit_backward[line in sys.lines.names], -LineFlow[line] ≤ LineCapacity_backward[line]
-            LineFlowComp[line in ACLines], LineFlow[line] == sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[bus]]* NodalInjection[bus] for bus in buses) + sum(sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[dcline_to_bus[dcline][2]]]* LineFlow[dcline] - sys.grid["ptdf"][line_to_ptdf_index[line], bus_to_ptdf_index[dcline_to_bus[dcline][1]]]* LineFlow[dcline] for dcline in DCLines)
+            LineFlowComp[line in ACLines], LineFlow[line] == sum(sys.grid["nPTDF"][line,bus]* NodalInjection[bus] for bus in buses) - sum(sys.grid["nPTDF"][line,dcline_to_bus[dcline][2]]*LineFlow[dcline] - sys.grid["nPTDF"][line,dcline_to_bus[dcline][1]]*LineFlow[dcline] for dcline in DCLines) 
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
             end)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :FB_fixed
-        minram = sys.grid["minram"]
-        CNECs = []
-        CNEC_to_CNE = Dict()
-        CNEC_to_idx = sys.grid["CNEC_to_idx"]
-        for i_cnec in 1:length(sys.grid["CNECs"])
-            cne_name = string(sys.grid["CNECs"][string(i_cnec)]["CNE"])
-            cnec_name = sys.grid["CNECs"][string(i_cnec)]["name"]
-            push!(CNECs, cnec_name)
-            push!(CNEC_to_CNE,cnec_name=>cne_name)
-        end
+        CNECs = sys.grid["zPTDF_f"].axes[1]
         @constraints(m, begin
-            CNE_f_comp[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  ≤ minram * LineCapacity_forward[CNEC_to_CNE[CNEC]]
-            CNE_f_comp_o[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  ≥ - (minram * LineCapacity_forward[CNEC_to_CNE[CNEC]])
+            FB[CNEC in CNECs], sum(sys.grid["zPTDF_f"][CNEC, area]*NetPosition[area] for area in sys.regions.names)  ≤ sys.grid["RAM_f"][CNEC]
             PowerConservation, sum(NetPosition) == 0
             NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
@@ -204,25 +211,16 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
 
         @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
     elseif method.type == :FB_fixed_evolved
-        minram = sys.grid["minram"]
         @show DClines = [string(i_dcline["name"]) for (i_id, i_dcline) in sys.grid["dcline"]]
-        CNECs = []
-        CNEC_to_CNE = Dict()
-        CNEC_to_idx = sys.grid["CNEC_to_idx"]
-        for i_cnec in 1:length(sys.grid["CNECs"])
-            cne_name = string(sys.grid["CNECs"][string(i_cnec)]["CNE"])
-            cnec_name = sys.grid["CNECs"][string(i_cnec)]["name"]
-            push!(CNECs, cnec_name)
-            push!(CNEC_to_CNE,cnec_name=>cne_name)
-        end
+        CNECs = sys.grid["zPTDF_f"].axes[1]
+
         @variables(m, begin
               HVDC_f[dcline in DClines]
         end)
         @constraints(m, begin
             HVDC_f_cap[dcline in DClines], HVDC_f[dcline] ≤ LineCapacity_forward[dcline]
             HVDC_f_cap_n[dcline in DClines], -HVDC_f[dcline] ≤ LineCapacity_forward[dcline]
-            CNE_f_comp[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  + sum( sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline]]*HVDC_f[dcline]  for dcline in DClines)  ≤ minram * LineCapacity_forward[CNEC_to_CNE[CNEC]]
-            CNE_f_comp_o[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  + sum( sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline]]*HVDC_f[dcline]  for dcline in DClines) ≥ - (minram * LineCapacity_forward[CNEC_to_CNE[CNEC]])
+            FB[CNEC in CNECs], sum(sys.grid["zPTDF_f"][CNEC, area]*NetPosition[area] for area in sys.regions.names)  + sum(sys.grid["zPTDF_f"][CNEC, "Virtual_"*dcline]*HVDC_f[dcline] for dcline in DClines) ≤ sys.grid["RAM_f"][CNEC]
             PowerConservation, sum(NetPosition) == 0
             NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
