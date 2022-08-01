@@ -40,5 +40,5 @@ export SystemModel, SequentialMonteCarlo, assess, MonteCarloAPI, AbstractMC, Pow
 export Shortfall, Surplus, Flow, Utilization, ShortfallSamples, SurplusSamples, FlowSamples, UtilizationSamples, GeneratorAvailability
 export LOLE, EUE
 export validate
-export compute_GSK_proportional!, compute_zPTDF!, add_virtual_areas_to_zPTDF!, compute_NTCs!
+export compute_GSK_proportional!, compute_zPTDF!, add_virtual_areas_to_zPTDF!, compute_NTCs!, compute_zPTDF_and_RAM!, compute_nPTDF!, compute_final_domain!, compute_basecase_flows!, compute_NTCs_f!
 end
