@@ -7,7 +7,7 @@ cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 
 samples_no = 1
 seed = Int64(round(rand(1)[1]*10000))
-threaded = false
+threaded = true
 case = "RTS_GMLC"
 #case = "case5"
 
@@ -24,7 +24,7 @@ for i_type in [:NTC_f,:FB_fixed,:FB_fixed_evolved, :Nodal, :Copperplate]#[:FB_fi
     push!(LOLE_df, Dict(:Case => string(i_type), :Area_A => string(LOLE(x[1],sysModel.regions.names[1])), :Area_B => string(LOLE(x[1],sysModel.regions.names[2])), :Area_C => string(LOLE(x[1],sysModel.regions.names[3])), :Total => string(LOLE(x[1]))); cols = :union)
 end
 
-open("Perf_debug_"*case*".txt","w") do io
+open("Perf_debug_"*case*"_"*string(now())*".txt","w") do io
     println(io, "Simulation finished on "*string(now()))
     println(io, "Case: "*string(case))
     println(io, "Number of MC years (per thread): "*string(samples_no))
