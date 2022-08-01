@@ -184,16 +184,15 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
     elseif method.type == :FB_fixed
-        minram = 75/100
+        minram = sys.grid["minram"]
         CNECs = []
         CNEC_to_CNE = Dict()
-        CNEC_to_idx = Dict()
+        CNEC_to_idx = sys.grid["CNEC_to_idx"]
         for i_cnec in 1:length(sys.grid["CNECs"])
             cne_name = string(sys.grid["CNECs"][string(i_cnec)]["CNE"])
             cnec_name = sys.grid["CNECs"][string(i_cnec)]["name"]
             push!(CNECs, cnec_name)
             push!(CNEC_to_CNE,cnec_name=>cne_name)
-            push!(CNEC_to_idx,cnec_name=>sys.grid["br_to_idx"][cne_name])
         end
         @constraints(m, begin
             CNE_f_comp[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  ≤ minram * LineCapacity_forward[CNEC_to_CNE[CNEC]]
@@ -205,17 +204,16 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
 
         @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
     elseif method.type == :FB_fixed_evolved
-        minram = 75/100
+        minram = sys.grid["minram"]
         @show DClines = [string(i_dcline["name"]) for (i_id, i_dcline) in sys.grid["dcline"]]
         CNECs = []
         CNEC_to_CNE = Dict()
-        CNEC_to_idx = Dict()
+        CNEC_to_idx = sys.grid["CNEC_to_idx"]
         for i_cnec in 1:length(sys.grid["CNECs"])
             cne_name = string(sys.grid["CNECs"][string(i_cnec)]["CNE"])
             cnec_name = sys.grid["CNECs"][string(i_cnec)]["name"]
             push!(CNECs, cnec_name)
             push!(CNEC_to_CNE,cnec_name=>cne_name)
-            push!(CNEC_to_idx,cnec_name=>sys.grid["br_to_idx"][cne_name])
         end
         @variables(m, begin
               HVDC_f[dcline in DClines]
@@ -223,8 +221,8 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
         @constraints(m, begin
             HVDC_f_cap[dcline in DClines], HVDC_f[dcline] ≤ LineCapacity_forward[dcline]
             HVDC_f_cap_n[dcline in DClines], -HVDC_f[dcline] ≤ LineCapacity_forward[dcline]
-            CNE_f_comp[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  + sum( sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline*"_f"]]*HVDC_f[dcline] +  sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline*"_t"]]*-HVDC_f[dcline] for dcline in DClines)  ≤ minram * LineCapacity_forward[CNEC_to_CNE[CNEC]]
-            CNE_f_comp_o[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  + sum( sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline*"_f"]]*HVDC_f[dcline] +  sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline*"_t"]]*-HVDC_f[dcline] for dcline in DClines) ≥ - (minram * LineCapacity_forward[CNEC_to_CNE[CNEC]])
+            CNE_f_comp[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  + sum( sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline]]*HVDC_f[dcline]  for dcline in DClines)  ≤ minram * LineCapacity_forward[CNEC_to_CNE[CNEC]]
+            CNE_f_comp_o[CNEC in CNECs], sum(sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"][area]]*NetPosition[area] for area in sys.regions.names)  + sum( sys.grid["zPTDF"][CNEC_to_idx[CNEC], sys.grid["area_to_idx"]["Virtual_"*dcline]]*HVDC_f[dcline]  for dcline in DClines) ≥ - (minram * LineCapacity_forward[CNEC_to_CNE[CNEC]])
             PowerConservation, sum(NetPosition) == 0
             NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
             AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
