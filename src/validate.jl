@@ -32,3 +32,25 @@ function validate(sys::SystemModel)
     @info "Modal Validation finished"
     return true
 end
+function read_test_model(p_case)
+    if p_case=="RTS_GMLC"
+        sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
+        pm_input =PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m")
+    elseif p_case == "case5"
+        sys = read_XLSX("test_inputs/case5/case5.xlsx")
+        pm_input =PowerModels.parse_file("test_inputs/case5/case5.m")
+    else 
+        @error "Unrecognized test case with name: "*p_case
+    end
+    merge!(sys.grid,pm_input)
+    compute_nPTDF!(sys)
+    sys.grid["minram"] =70/100
+    compute_GSK_proportional!(sys)
+    compute_zPTDF_and_RAM!(sys)
+    add_virtual_areas_to_zPTDF!(sys)
+    compute_basecase_flows!(sys)
+    compute_final_domain!(sys)
+    compute_NTCs_f!(sys)
+    validate(sys)
+    return sys
+end
