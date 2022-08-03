@@ -100,6 +100,24 @@ function OptProblem(sys::SystemModel, method::AbstractMC)
             end)
         
         @objective(m, Min, sum(Curtailment[name] for name in sys.regions.names))
+
+    elseif method.type == :QNTC_f
+        areas = sys.grid["zPTDF"].axes[2]
+        maxnp  = JuMP.Containers.DenseAxisArray(zeros(length(areas)), areas)
+        minnp  = JuMP.Containers.DenseAxisArray(zeros(length(areas)), areas)
+        for i_ntc in eachrow(sys.grid["NTC_df"])
+            maxnp[i_ntc[:F_area]] += i_ntc[:Value]
+            minnp[i_ntc[:T_area]] += i_ntc[:Value]
+        end
+        @constraints(m, begin
+            PowerConservation, sum(NetPosition) == 0
+            NetPositionComp[name in sys.regions.names], NetPosition[name] == Supply[name] + Curtailment[name] - Demand[name]
+            ExportLimit[area in sys.regions.names], NetPosition[area] ≤ maxnp[area]
+            ImportLimit[area in sys.regions.names], NetPosition[area] ≥ -minnp[area]
+            AvailableSupply[name in sys.regions.names], Supply[name] ≤ sum(GeneratorsCapacity[sys.generators.names[gen_index]] for gen_index in sys.region_gen_idxs[region_name_to_index[name]])
+            end)
+        
+        @objective(m, Min, sum(Curtailment[name]^2 for name in sys.regions.names))
     elseif method.type == :Autarky 
         @constraints(m, begin
             PowerConservation, sum(NetPosition) == 0
