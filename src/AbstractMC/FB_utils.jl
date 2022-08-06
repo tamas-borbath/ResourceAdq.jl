@@ -160,7 +160,7 @@ function compute_basecase_flows!(sys)
         NPs["Virtual_"*i_br["name"]] = results["solution"]["dcline"][i_br_id]["pf"]*100
         dcflows += results["solution"]["dcline"][i_br_id]["pf"]*100
      end
-    @assert sum(NPs.data) ≈ dcflows "Flows mismatch"
+    @assert abs(sum(NPs.data)-dcflows)<1 "Flows mismatch by: "*string(sum(NPs.data)-dcflows)
     F_zero = JuMP.Containers.DenseAxisArray(zeros(length(cnecs)), cnecs)
     for i_cnec in cnecs
         pre_load = F_ref[i_cnec] - sum(NPs[i_area]*sys.grid["zPTDF"][i_cnec, i_area] for i_area in areas) 
