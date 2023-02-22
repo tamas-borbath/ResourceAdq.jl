@@ -1,14 +1,14 @@
 using XLSX, DataFrames, Dates, TimeZones
 function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_input, p_Length)
    @info "Loading data for: "*p_name
-   global  gens_df = DataFrame(XLSX.gettable(p_input[p_name])...)
+   global  gens_df = DataFrame(XLSX.gettable(p_input[p_name]))
     DataFrames.sort!(gens_df, p_index_col)
     vars = Dict()
     vars[:names] = gens_df[!,:Names]
-    region_names = string.(DataFrames.names(DataFrame(XLSX.gettable(p_input["Regions"])...)))
+    region_names = string.(DataFrames.names(DataFrame(XLSX.gettable(p_input["Regions"]))))
     region_map = Dict([region_names[i] => i for i in 1:length(region_names)])
     if p_name == "Lines"
-        interface_names = DataFrame(XLSX.gettable(p_input["Interface"])...)[!,:Names]
+        interface_names = DataFrame(XLSX.gettable(p_input["Interface"]))[!,:Names]
         interface_map = Dict([interface_names[i] => i for i in 1:length(interface_names)])
     end
 
@@ -19,7 +19,7 @@ function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_in
     var_tables = Dict()
     for name in  XLSX.sheetnames(p_input)
         if split(name, "-")[1] == p_name && name != p_name
-            push!(var_tables, split(name,"-")[2] => DataFrame(XLSX.gettable(p_input[name])...))
+            push!(var_tables, split(name,"-")[2] => DataFrame(XLSX.gettable(p_input[name])))
         end
     end
     
@@ -81,7 +81,7 @@ function read_XLSX(p_path)
     input_xlsx = XLSX.readxlsx(p_path)
     #settings
     sheetnames = XLSX.sheetnames(input_xlsx)
-    settings_df = DataFrame(XLSX.gettable(input_xlsx["Settings"])...)
+    settings_df = DataFrame(XLSX.gettable(input_xlsx["Settings"]))
     settings = Dict()
     for i_row in eachrow(settings_df)
         push!(settings, i_row[:Name] => i_row[:Type])
@@ -140,7 +140,7 @@ function read_XLSX(p_path)
     line_interfaces = vars[:index]
     @show line_interfaces
     
-    regions_df = DataFrame(XLSX.gettable(input_xlsx["Regions"])...)
+    regions_df = DataFrame(XLSX.gettable(input_xlsx["Regions"]))
     regions = Regions{Length,PowerUnit}(
         DataFrames.names(regions_df), Matrix{Int64}(transpose(Matrix{Int64}(regions_df))))
 
