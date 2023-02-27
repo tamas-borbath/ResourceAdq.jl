@@ -65,7 +65,7 @@ end
 function merge!(
     x::AMCLineDualAccumulator, y::AMCLineDualAccumulator
 )
-    for i_line in 1:acc.nlines
+    for i_line in 1:x.nlines
         fit!(x.LineDual_line[i_line],y.LineDual_line[i_line])
     end
     return
