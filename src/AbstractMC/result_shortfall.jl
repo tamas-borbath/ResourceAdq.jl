@@ -213,7 +213,7 @@ function record!(
     regionindex_to_name = Dict([i=>axes(CurtailmentVars)[1][i] for i in 1:length(axes(CurtailmentVars)[1])])
     
     for r in keys(regionindex_to_name)
-        acc.shortfall[r, t, sampleid] = round(value(CurtailmentVars[regionindex_to_name[r]]);digits = 2)
+        acc.shortfall[r, t, sampleid] = Int(round(value(CurtailmentVars[regionindex_to_name[r]]);digits = 0))
     end
 
     return
