@@ -26,6 +26,9 @@ struct LineDualResult{N,L,T<:Period,P<:PowerUnit} <: AbstractLineDualResult{N,L,
     LineDual_mean::Vector{Float64}
     LineDual_std::Vector{Float64}
 
+    LineDual_period_mean::Matrix{Float64}
+    LineDual_period_std::Matrix{Float64}
+
     #LineDual_line_std::Vector{Float64}
     #LineDual_lineperiod_std::Matrix{Float64}
 

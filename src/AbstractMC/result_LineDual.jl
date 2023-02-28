@@ -3,6 +3,7 @@
 struct AMCLineDualAccumulator <:
     ResultAccumulator{AbstractMC,LineDual}
     nlines::Int
+    ntimes::Int
     #LineDual_total::MeanVariance
     #LineDual_line::Vector{MeanVariance}
     #LineDual_period::Vector{MeanVariance}
@@ -11,6 +12,8 @@ struct AMCLineDualAccumulator <:
     # Running totals for current simulation
     # LineDual_total_currentsim::Float64
     LineDual_line::Vector{MeanVariance}
+    LineDual_lineperiod::Matrix{MeanVariance}
+
     LineDual_lineperiod_currentsim::Matrix{Float64}
 end
 
@@ -24,7 +27,7 @@ function accumulator(
 ) where {N}
     # Init all the values
     nlines = length(sys.lines)
-
+    ntimes = N
    # LineDual_total = meanvariance()
    # LineDual_line = [meanvariance() for _ in 1:nlines]
    # LineDual_period = [meanvariance() for _ in 1:N]
@@ -32,8 +35,9 @@ function accumulator(
 
    # LineDual_total_currentsim = 0.0
     LineDual_line = [meanvariance() for _ in 1:nlines]
+    LineDual_lineperiod = [meanvariance() for _ in 1:nlines, _ in 1:N]
     LineDual_lineperiod_currentsim = zeros(Float64, N, nlines)
-    return AMCLineDualAccumulator(nlines, LineDual_line,LineDual_lineperiod_currentsim )
+    return AMCLineDualAccumulator(nlines, ntimes, LineDual_line, LineDual_lineperiod, LineDual_lineperiod_currentsim )
 
 end
 
@@ -57,6 +61,9 @@ function reset!(acc::AMCLineDualAccumulator, sampleid::Int)
     #compute an averege for each line and store it
     for i_line in 1:acc.nlines
         fit!(acc.LineDual_line[i_line], sum(acc.LineDual_lineperiod_currentsim[:,i_line]))
+        for t in 1:acc.ntimes
+            fit!(acc.LineDual_lineperiod[i_line,t], acc.LineDual_lineperiod_currentsim[t,i_line])
+        end
     end
     #reset the currentsim values
     acc.LineDual_lineperiod_currentsim .= 0.0
@@ -67,6 +74,9 @@ function merge!(
 )
     for i_line in 1:x.nlines
         fit!(x.LineDual_line[i_line],y.LineDual_line[i_line])
+        for t in 1:x.ntimes
+            fit!(x.LineDual_lineperiod[i_line,t],y.LineDual_lineperiod[i_line,t])
+        end
     end
     return
 end
@@ -76,11 +86,16 @@ function finalize(
     acc::AMCLineDualAccumulator,
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E}
-    l_nsamples = N
+    l_nsamples = first(acc.LineDual_line[1].stats).n
     l_lines = system.lines.names
     l_timestamps = system.timestamps
     l_LineDual_mean, l_LineDual_std = mean_std(acc.LineDual_line)
-    return LineDualResult{N,L,T,P}(l_nsamples, l_lines, l_timestamps, l_LineDual_mean, l_LineDual_std)
+    l_LineDual_period_mean = zeros(Float64, acc.ntimes, acc.nlines)
+    l_LineDual_period_std = zeros(Float64, acc.ntimes, acc.nlines)
+    for i_line in 1:acc.nlines
+        l_LineDual_period_mean[:,i_line], l_LineDual_period_std[:,i_line] = mean_std(acc.LineDual_lineperiod[i_line,:])
+    end
+    return LineDualResult{N,L,T,P}(l_nsamples, l_lines, l_timestamps, l_LineDual_mean, l_LineDual_std, l_LineDual_period_mean, l_LineDual_period_std)
 
 end
 
