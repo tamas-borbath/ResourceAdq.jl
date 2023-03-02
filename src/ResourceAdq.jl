@@ -41,4 +41,5 @@ export Shortfall, Surplus, LineDual, LineDualSamples, Flow, Utilization, Shortfa
 export LOLE, EUE
 export validate
 export compute_GSK_proportional!, compute_zPTDF!, add_virtual_areas_to_zPTDF!, compute_NTCs!, compute_zPTDF_and_RAM!, compute_nPTDF!, compute_final_domain!, compute_basecase_flows!, compute_NTCs_f!, read_test_model
+export LineLimit_forward, LineLimit_backward
 end

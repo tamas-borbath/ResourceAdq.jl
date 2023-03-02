@@ -2,6 +2,7 @@
 
 struct AMCLineDualAccumulator <:
     ResultAccumulator{AbstractMC,LineDual}
+    type :: Symbol
     nlines::Int
     ntimes::Int
     #LineDual_total::MeanVariance
@@ -23,11 +24,12 @@ accumulatortype(::AbstractMC, ::LineDual) = AMCLineDualAccumulator
 
 # Initial values. Called once when the optimizaiton model is built
 function accumulator(
-    sys::SystemModel{N}, simspec::AbstractMC, ::LineDual
-) where {N}
+    sys::SystemModel{N}, simspec::AbstractMC, ::LineDual{C}
+) where {N,C}
     # Init all the values
     nlines = length(sys.lines)
     ntimes = N
+    ntype = unitsymbol(C)
    # LineDual_total = meanvariance()
    # LineDual_line = [meanvariance() for _ in 1:nlines]
    # LineDual_period = [meanvariance() for _ in 1:N]
@@ -37,7 +39,7 @@ function accumulator(
     LineDual_line = [meanvariance() for _ in 1:nlines]
     LineDual_lineperiod = [meanvariance() for _ in 1:nlines, _ in 1:N]
     LineDual_lineperiod_currentsim = zeros(Float64, N, nlines)
-    return AMCLineDualAccumulator(nlines, ntimes, LineDual_line, LineDual_lineperiod, LineDual_lineperiod_currentsim )
+    return AMCLineDualAccumulator(ntype, nlines, ntimes, LineDual_line, LineDual_lineperiod, LineDual_lineperiod_currentsim )
 
 end
 
@@ -50,7 +52,7 @@ function record!(
 ) where {N,L,T,P,E}
 
     for (index, name) in [(i,system.lines.names[i]) for i in 1:length(system.lines)]
-        acc.LineDual_lineperiod_currentsim[t,index] =shadow_price(problem.mdl.obj_dict[:LineLimit_forward][name]) + shadow_price(problem.mdl.obj_dict[:LineLimit_backward][name])
+        acc.LineDual_lineperiod_currentsim[t,index] =shadow_price(problem.mdl.obj_dict[acc.type][name])
     end
 
     return
@@ -95,7 +97,7 @@ function finalize(
     for i_line in 1:acc.nlines
         l_LineDual_period_mean[:,i_line], l_LineDual_period_std[:,i_line] = mean_std(acc.LineDual_lineperiod[i_line,:])
     end
-    return LineDualResult{N,L,T,P}(l_nsamples, l_lines, l_timestamps, l_LineDual_mean, l_LineDual_std, l_LineDual_period_mean, l_LineDual_period_std)
+    return LineDualResult{N,L,T,P}(acc.type,l_nsamples, l_lines, l_timestamps, l_LineDual_mean, l_LineDual_std, l_LineDual_period_mean, l_LineDual_period_std)
 
 end
 

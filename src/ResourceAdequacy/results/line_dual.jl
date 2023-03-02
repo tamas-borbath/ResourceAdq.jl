@@ -1,4 +1,14 @@
-struct LineDual <: ResultSpec end
+abstract type LineConstraintType
+ end # The name has to match the internal jum name of the constraint indexed by lines 
+struct LineLimit_forward <: LineConstraintType
+ end
+struct LineLimit_backward <: LineConstraintType
+ end
+unitsymbol(T::Type{<:LineConstraintType
+}) = Symbol(T)
+
+struct LineDual{T<:LineConstraintType
+} <: ResultSpec end
 abstract type AbstractLineDualResult{N,L,T} <: Result{N,L,T} end
 
 # Colon indexing
@@ -18,7 +28,7 @@ getindex(x::AbstractLineDualResult, ::Colon, ::Colon) =
 # Sample-averaged LineDual data
 
 struct LineDualResult{N,L,T<:Period,P<:PowerUnit} <: AbstractLineDualResult{N,L,T}
-
+    Constraint_Type :: Symbol
     nsamples::Union{Int64,Nothing}
     lines::Vector{String}
     timestamps::StepRange{ZonedDateTime,T}
