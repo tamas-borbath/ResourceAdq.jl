@@ -158,7 +158,7 @@ function solve!(
     dispatchproblem::AbstractDispatchProblem, state::SystemState,
     system::SystemModel, t::Int
 )
-    optimize!(dispatchproblem.mdl)
+    redirect_stdout((()->optimize!(dispatchproblem.mdl)),open("/dev/null", "w"))    
     #We could update the state with the new state for energy in stors and genstors
     #update_state!(state, dispatchproblem, system, t)
 end
