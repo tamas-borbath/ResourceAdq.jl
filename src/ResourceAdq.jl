@@ -1,7 +1,7 @@
 module ResourceAdq
 
-using ParameterJuMP, JuMP, Clp#Gurobi
-const SOLVER = Clp
+using ParameterJuMP, JuMP, Clp, Gurobi
+const SOLVER = Gurobi
 
 #using PRAS
 #import PRAS: SequentialMonteCarlo, GeneratorAvailability, assess
