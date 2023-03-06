@@ -140,7 +140,7 @@ function read_XLSX(p_path; verbose = false, demand_scale = 1.0)
     
     regions_df = DataFrame(XLSX.gettable(input_xlsx["Regions"]))
     regions = Regions{Length,PowerUnit}(
-        DataFrames.names(regions_df), Matrix{Int64}(transpose(Matrix{Int64}(regions_df))).*demand_scale)
+        DataFrames.names(regions_df), Matrix{Int64}(transpose(Matrix{Int64}(regions_df)).*demand_scale))
 
     vars = read_data("Interface",:Names, [:Region_from, :Region_to, :limit_forward, :limit_backward],[] ,input_xlsx, Length)
     interfaces = Interfaces{Length,PowerUnit}(
