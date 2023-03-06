@@ -1,7 +1,7 @@
 using XLSX, DataFrames, Dates, TimeZones
-function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_input, p_Length)
-   @info "Loading data for: "*p_name
-   global  gens_df = DataFrame(XLSX.gettable(p_input[p_name]))
+function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_input, p_Length; verbose = false)
+    verbose ? println("Loading data for: $p_name") : true
+    gens_df = DataFrame(XLSX.gettable(p_input[p_name]))
     DataFrames.sort!(gens_df, p_index_col)
     vars = Dict()
     vars[:names] = gens_df[!,:Names]
@@ -24,7 +24,7 @@ function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_in
     end
     
     for i_var in p_variables_int
-        @show i_var
+        verbose ? println("Variable: $i_var") : true
         if p_name == "Interface" && i_var in [:Region_from, :Region_to]
             vars[i_var] = Vector{Int64}([region_map[x] for x in gens_df[!, i_var]])
         else   
@@ -76,8 +76,8 @@ function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_in
     global vars[:index] = idxs
     return vars
 end
-function read_XLSX(p_path)
-    @info "Reading model from: "*p_path
+function read_XLSX(p_path; verbose = false)
+    verbose ? println("Reading model from: $p_path") : true
     input_xlsx = XLSX.readxlsx(p_path)
     #settings
     sheetnames = XLSX.sheetnames(input_xlsx)
@@ -86,7 +86,6 @@ function read_XLSX(p_path)
     for i_row in eachrow(settings_df)
         push!(settings, i_row[:Name] => i_row[:Type])
     end
-    @show settings
     #These are not safe for code injection
     EnergyUnit = eval(Meta.parse(settings["EnergyUnit"]))
     TimeUnit = eval(Meta.parse(settings["TimeUnit"]))
@@ -138,7 +137,6 @@ function read_XLSX(p_path)
         vars[:forward_capacity], vars[:backward_capacity],
         vars[:λ], vars[:μ])
     line_interfaces = vars[:index]
-    @show line_interfaces
     
     regions_df = DataFrame(XLSX.gettable(input_xlsx["Regions"]))
     regions = Regions{Length,PowerUnit}(
@@ -149,7 +147,6 @@ function read_XLSX(p_path)
         vars[:Region_from],vars[:Region_to] ,
         vars[:limit_forward], vars[:limit_backward])
     timestamps = TimeStamp_start:TimeStamp_step:TimeStamp_stop
-    @show length(timestamps)
     return SystemModel(
         regions, interfaces,
         generators, gen_regions, storages, stor_regions,

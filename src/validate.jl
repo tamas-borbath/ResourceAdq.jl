@@ -32,9 +32,11 @@ function validate(sys::SystemModel)
     @info "Modal Validation finished"
     return true
 end
-function read_test_model(p_case)
+function read_test_model(p_case; verbose = false)
+    @info "Loading $p_case data from file" 
+    verbose ? false : PowerModels.silence() 
     if p_case=="RTS_GMLC"
-        sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx")
+        sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx", verbose)
         pm_input =PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m")
     elseif p_case == "case5"
         sys = read_XLSX("test_inputs/case5/case5.xlsx")
@@ -43,6 +45,7 @@ function read_test_model(p_case)
         @error "Unrecognized test case with name: "*p_case
     end
     merge!(sys.grid,pm_input)
+    @info "Computing flow domains" 
     compute_nPTDF!(sys)
     sys.grid["minram"] =70/100
     compute_GSK_proportional!(sys)
