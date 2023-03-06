@@ -4,11 +4,9 @@ struct LineLimit_forward <: LineConstraintType
  end
 struct LineLimit_backward <: LineConstraintType
  end
-unitsymbol(T::Type{<:LineConstraintType
-}) = Symbol(T)
+unitsymbol(T::Type{<:LineConstraintType}) = Symbol(T)
 
-struct LineDual{T<:LineConstraintType
-} <: ResultSpec end
+struct LineDual{T<:LineConstraintType} <: ResultSpec end
 abstract type AbstractLineDualResult{N,L,T} <: Result{N,L,T} end
 
 # Colon indexing
@@ -59,10 +57,10 @@ end
 =#
 # Full LineDual data
 
-struct LineDualSamples <: ResultSpec end
+struct LineDualSamples{T<:LineConstraintType} <: ResultSpec end
 
 struct LineDualSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractLineDualResult{N,L,T}
-
+    Constraint_Type :: Symbol
     lines::Vector{String}
     timestamps::StepRange{ZonedDateTime,T}
 

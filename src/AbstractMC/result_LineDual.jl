@@ -52,7 +52,7 @@ function record!(
 ) where {N,L,T,P,E}
 
     for (index, name) in [(i,system.lines.names[i]) for i in 1:length(system.lines)]
-        acc.LineDual_lineperiod_currentsim[t,index] =shadow_price(problem.mdl.obj_dict[acc.type][name])
+        acc.LineDual_lineperiod_currentsim[t,index] = shadow_price(problem.mdl.obj_dict[acc.type][name])
     end
 
     return
@@ -106,7 +106,7 @@ end
 
 struct AMCLineDualSamplesAccumulator <:
     ResultAccumulator{AbstractMC,LineDualSamples}
-
+    type :: Symbol
     LineDual::Array{Float64,3}
 
 end
@@ -123,13 +123,14 @@ end
 accumulatortype(::AbstractMC, ::LineDualSamples) = AMCLineDualSamplesAccumulator
 
 function accumulator(
-    sys::SystemModel{N}, simspec::AbstractMC, ::LineDualSamples
-) where {N}
+    sys::SystemModel{N}, simspec::AbstractMC, ::LineDualSamples{C}
+) where {N, C}
 
+    ntype = unitsymbol(C)
     nlines = length(sys.lines)
     LineDual = zeros(Float64, nlines, N, simspec.nsamples)
 
-    return AMCLineDualSamplesAccumulator(LineDual)
+    return AMCLineDualSamplesAccumulator(ntype, LineDual)
 
 end
 
@@ -141,7 +142,7 @@ function record!(
 ) where {N,L,T,P,E}
     
     for (index, name) in [(i,system.lines.names[i]) for i in 1:length(system.lines)]
-        acc.LineDual[index, t, sampleid] =shadow_price(problem.mdl.obj_dict[:LineLimit_forward][name]) + shadow_price(problem.mdl.obj_dict[:LineLimit_backward][name])
+        acc.LineDual[index, t, sampleid] =shadow_price(problem.mdl.obj_dict[acc.type][name])
     end
 
     return
@@ -155,7 +156,7 @@ function finalize(
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E}
 
-    return LineDualSamplesResult{N,L,T,P}(
+    return LineDualSamplesResult{N,L,T,P}(acc.type,
         system.lines.names, system.timestamps, acc.LineDual)
 
 end
