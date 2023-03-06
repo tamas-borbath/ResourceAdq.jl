@@ -141,7 +141,7 @@ function add_virtual_areas_to_zPTDF!(p_sysModel)
 end
 
 function compute_basecase_flows!(sys)
-    results = PowerModels.solve_dc_opf(sys.grid, Gurobi.Optimizer)
+    results = PowerModels.solve_dc_opf(sys.grid, SOLVER.Optimizer)
     cnecs = sys.grid["zPTDF"].axes[1]
     F_ref = JuMP.Containers.DenseAxisArray(zeros(length(cnecs)), cnecs)
     cne_to_key = Dict([v["name"] => k for (k,v) in sys.grid["branch"]])
@@ -243,7 +243,7 @@ function compute_NTCs_f!(sys)
         new_NTCs[!,:Constrained_by] = Constraining_element
        # @show new_NTCs
         if delta <0.001
-            @info "Converged"
+           # @info "Converged"
             ATC = round.(ATC)
             break
         end
