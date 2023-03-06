@@ -76,7 +76,7 @@ function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_in
     global vars[:index] = idxs
     return vars
 end
-function read_XLSX(p_path; verbose = false)
+function read_XLSX(p_path; verbose = false, demand_scale = 1.0)
     verbose ? println("Reading model from: $p_path") : true
     input_xlsx = XLSX.readxlsx(p_path)
     #settings
@@ -140,7 +140,7 @@ function read_XLSX(p_path; verbose = false)
     
     regions_df = DataFrame(XLSX.gettable(input_xlsx["Regions"]))
     regions = Regions{Length,PowerUnit}(
-        DataFrames.names(regions_df), Matrix{Int64}(transpose(Matrix{Int64}(regions_df))))
+        DataFrames.names(regions_df), Matrix{Int64}(transpose(Matrix{Int64}(regions_df))).*demand_scale)
 
     vars = read_data("Interface",:Names, [:Region_from, :Region_to, :limit_forward, :limit_backward],[] ,input_xlsx, Length)
     interfaces = Interfaces{Length,PowerUnit}(
