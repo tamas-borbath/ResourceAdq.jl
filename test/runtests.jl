@@ -4,11 +4,11 @@ using PowerModels
 using DataFrames
 using Dates
 using Statistics
+using Gurobi
 
-
-samples_no = 10 #per thread
+samples_no = 32 #per thread
 seed = Int64(round(rand(1)[1]*10000))
-threaded = false
+threaded = true
 #case = "RTS_GMLC"
 case = "case5"
 
@@ -23,7 +23,7 @@ for case in [ "RTS_GMLC", "case5"]
 
     @info "Runing testcases for $case with $samples_no samples, threaded: $threaded, seed $seed"
 
-    smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = false, threaded=threaded)
+    smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = false, threaded=threaded, optimizer = Gurobi)
     stats = @timed assess(sysModel, smallsample, Shortfall(), LineDual{LineLimit_forward}(), LineDual{LineLimit_backward}(), LineDualSamples{LineLimit_forward}(), LineDualSamples{LineLimit_backward}());
     x=stats.value
 

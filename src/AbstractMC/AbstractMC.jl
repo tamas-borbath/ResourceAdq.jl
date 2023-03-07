@@ -7,14 +7,15 @@ struct AbstractMC <: SimulationSpec
     verbose::Bool
     threaded::Bool
     type::Symbol
+    optimizer::Module
 
     function AbstractMC(;
         samples::Int=10_000, seed::Integer=rand(UInt64),
-        verbose::Bool=false, threaded::Bool=true, type::Symbol
+        verbose::Bool=false, threaded::Bool=true, type::Symbol, optimizer::Module=SOLVER
     )
         samples <= 0 && throw(DomainError("Sample count must be positive"))
         seed < 0 && throw(DomainError("Random seed must be non-negative"))
-        new(samples, UInt64(seed), verbose, threaded, type)
+        new(samples, UInt64(seed), verbose, threaded, type, optimizer)
     end
 
 end
