@@ -38,7 +38,7 @@ function read_test_model(p_case; verbose = false, demand_scale = 1.0, line_capac
     @show pwd()
     @show readdir()
     if p_case=="RTS_GMLC"
-        sys = read_XLSX("./test_inputs/RTS_GMLC/RTS_GMLC.xlsx"; verbose=verbose, demand_scale = demand_scale, line_capacity_scale = line_capacity_scale)
+        sys = read_XLSX("./test_inputs/rts_gmlc/RTS_GMLC.xlsx"; verbose=verbose, demand_scale = demand_scale, line_capacity_scale = line_capacity_scale)
         pm_input =PowerModels.parse_file("./test_inputs/rts_gmlc/RTS_GMLC.m")
     elseif p_case == "case5"
         sys = read_XLSX("test_inputs/case5/case5.xlsx"; verbose=verbose, demand_scale= demand_scale, line_capacity_scale = line_capacity_scale)
