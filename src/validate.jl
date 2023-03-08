@@ -32,14 +32,14 @@ function validate(sys::SystemModel)
     @info "Modal Validation finished"
     return true
 end
-function read_test_model(p_case; verbose = false, demand_scale = 1.0)
+function read_test_model(p_case; verbose = false, demand_scale = 1.0, line_capacity_scale = 1.0)
     @info "Loading $p_case data from file" 
     verbose ? false : PowerModels.silence() 
     if p_case=="RTS_GMLC"
-        sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx"; verbose=verbose, demand_scale = demand_scale)
+        sys = read_XLSX("test_inputs/RTS_GMLC/RTS_GMLC.xlsx"; verbose=verbose, demand_scale = demand_scale, line_capacity_scale = line_capacity_scale)
         pm_input =PowerModels.parse_file("test_inputs/rts_gmlc/RTS_GMLC.m")
     elseif p_case == "case5"
-        sys = read_XLSX("test_inputs/case5/case5.xlsx"; verbose=verbose, demand_scale= demand_scale)
+        sys = read_XLSX("test_inputs/case5/case5.xlsx"; verbose=verbose, demand_scale= demand_scale, line_capacity_scale = line_capacity_scale)
         pm_input =PowerModels.parse_file("test_inputs/case5/case5.m")
     else 
         @error "Unrecognized test case with name: "*p_case

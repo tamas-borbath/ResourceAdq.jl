@@ -76,7 +76,7 @@ function read_data(p_name, p_index_col, p_variables_int, p_variables_float, p_in
     global vars[:index] = idxs
     return vars
 end
-function read_XLSX(p_path; verbose = false, demand_scale = 1.0)
+function read_XLSX(p_path; verbose = false, demand_scale = 1.0, line_capacity_scale =1.0)
     verbose ? println("Reading model from: $p_path") : true
     input_xlsx = XLSX.readxlsx(p_path)
     #settings
@@ -134,7 +134,7 @@ function read_XLSX(p_path; verbose = false, demand_scale = 1.0)
 
     lines = Lines{Length,TS_length,TimeUnit,PowerUnit}(
         vars[:names], vars[:categories],
-        vars[:forward_capacity], vars[:backward_capacity],
+        Matrix{Int64}(floor.(vars[:forward_capacity].*line_capacity_scale)), Matrix{Int64}(floor.(vars[:backward_capacity].*line_capacity_scale)),
         vars[:λ], vars[:μ])
     line_interfaces = vars[:index]
     

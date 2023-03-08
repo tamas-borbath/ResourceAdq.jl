@@ -1,4 +1,5 @@
 using Revise
+using Gurobi
 using ResourceAdq
 using PowerModels
 using DataFrames
@@ -9,9 +10,9 @@ cd("/Users/tborbath/.julia/dev/ResourceAdq/test")
 samples_no = 3 #per thread
 seed = Int64(round(rand(1)[1]*10000))
 threaded = false
-case = "RTS_GMLC"
-#case = "case5"
-sysModel = read_test_model(case)
+#case = "RTS_GMLC"
+case = "case5"
+sysModel = read_test_model(case; line_capacity_scale=0.4)
 i_type = :Nodal
 #Case_description = "Model:"*case*" simulations with "* threaded ? "multipel threads" : "single thread" * "and "*string(samples_no)*" sample"
 #ENS_df = DataFrame(Case=String[], Area_A=String[], Area_B=String[], Area_C=String[], Total=String[])
@@ -19,7 +20,7 @@ i_type = :Nodal
 #Perf_df  = DataFrame(Case=String[],Took = Float64[], Bytes = Int64[], GC_Time=Float64[] )
 #for i_type in [:NTC_f,:FB_fixed,:FB_fixed_evolved, :Nodal, :Copperplate]#[:FB_fixed_evolved, :FB_fixed, :Copperplate,:QCopperplate,:Nodal,:NTC,:QNTC,:Autarky]
 
-smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = true, threaded=threaded)
+smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = true, threaded=threaded, optimizer = Gurobi.Optimizer)
 stats = @timed assess(sysModel, smallsample, Shortfall(), LineDual{LineLimit_forward}(), LineDual{LineLimit_backward}(), LineDualSamples{LineLimit_forward}(), LineDualSamples{LineLimit_backward}());
 x=stats.value
 
