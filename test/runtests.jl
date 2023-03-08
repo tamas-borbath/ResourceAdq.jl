@@ -17,13 +17,13 @@ seed = Int64(round(rand(1)[1]*10000))
 threaded = false
 #case = "RTS_GMLC"
 for case in [ "RTS_GMLC", "case5"]
-    sysModel = read_test_model(case; demand_scale = 1, verbose = true)
+    sysModel = read_test_model(case; demand_scale = 1.01, verbose = true)
     i_type = :Nodal
     Case_description = String("Model:"*case*" simulations with "* string(samples_no)*" samples, threaded:"*string(threaded))
 
     @info "Runing testcases for $case with $samples_no samples, threaded: $threaded, seed $seed"
 
-    smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = false, threaded=threaded, optimizer = Gurobi)
+    smallsample = AbstractMC(samples=(threaded ? Threads.nthreads() * samples_no : samples_no), seed=seed; type = i_type, verbose = false, threaded=threaded, optimizer = optimizer_with_attributes(Gurobi.Optimizer, "OutputFlag" => 0))
     stats = @timed assess(sysModel, smallsample, Shortfall(), LineDual{LineLimit_forward}(), LineDual{LineLimit_backward}(), LineDualSamples{LineLimit_forward}(), LineDualSamples{LineLimit_backward}());
     x=stats.value
 

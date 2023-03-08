@@ -7,11 +7,11 @@ struct AbstractMC <: SimulationSpec
     verbose::Bool
     threaded::Bool
     type::Symbol
-    optimizer::Module
+    optimizer::Any
 
     function AbstractMC(;
         samples::Int=10_000, seed::Integer=rand(UInt64),
-        verbose::Bool=false, threaded::Bool=true, type::Symbol, optimizer::Module=SOLVER
+        verbose::Bool=false, threaded::Bool=true, type::Symbol, optimizer::Any=SOLVER
     )
         samples <= 0 && throw(DomainError("Sample count must be positive"))
         seed < 0 && throw(DomainError("Random seed must be non-negative"))
@@ -159,7 +159,9 @@ function solve!(
     dispatchproblem::AbstractDispatchProblem, state::SystemState,
     system::SystemModel, t::Int
 )
-    redirect_stdout((()->optimize!(dispatchproblem.mdl)),open("/dev/null", "w"))    
+    #redirect_stdout((()->
+    optimize!(dispatchproblem.mdl)
+    #),open("/dev/null", "w"))    
     #We could update the state with the new state for energy in stors and genstors
     #update_state!(state, dispatchproblem, system, t)
 end

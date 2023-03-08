@@ -1,6 +1,6 @@
 function OptProblem(sys::SystemModel, method::AbstractMC)
     #build base model 
-    m = Model(method.optimizer.Optimizer)
+    m = Model(method.optimizer)
 
      # Line Capacities are considered infinite
      region_name_to_index = Dict([sys.regions.names[i] => i for i in 1:length(sys.regions.names)])
