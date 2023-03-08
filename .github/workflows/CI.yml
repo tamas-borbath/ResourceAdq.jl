@@ -26,6 +26,12 @@ jobs:
           - x64
     steps:
       - uses: actions/checkout@v2
+      - shell: bash
+        env:
+          WLSLICENSE: ${{ secrets.WLSLICENSE }}
+        run: |
+          mkdir -p /opt/gurobi
+          echo "$WLSLICENSE" > /opt/gurobi/gurobi.lic
       - name: Add NREL registry
         run: julia -e 'using Pkg; Pkg.Registry.add(RegistrySpec(url = "https://github.com/NREL/JuliaRegistry.git"))'
         shell: bash
